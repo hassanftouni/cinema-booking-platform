@@ -27,11 +27,11 @@ Route::get('/cinemas/{id}', [\App\Http\Controllers\API\CinemaController::class, 
 
 Route::post('/contact', [\App\Http\Controllers\API\ContactController::class, 'store']);
 
-Route::prefix('admin')->group(function () {
+Route::prefix('admin')->name('admin.')->group(function () {
     Route::apiResource('movies', \App\Http\Controllers\API\Admin\MovieController::class);
     Route::apiResource('users', \App\Http\Controllers\API\Admin\UserController::class)->only(['index', 'update', 'destroy']);
     Route::apiResource('offers', \App\Http\Controllers\API\Admin\OfferController::class);
-    Route::get('/contacts', [\App\Http\Controllers\API\ContactController::class, 'index']);
-    Route::get('/contacts/unread-count', [\App\Http\Controllers\API\ContactController::class, 'unreadCount']);
-    Route::patch('/contacts/{id}/status', [\App\Http\Controllers\API\ContactController::class, 'updateStatus']);
+    Route::get('/contacts', [\App\Http\Controllers\API\ContactController::class, 'index'])->name('contacts.index');
+    Route::get('/contacts/unread-count', [\App\Http\Controllers\API\ContactController::class, 'unreadCount'])->name('contacts.unread-count');
+    Route::patch('/contacts/{id}/status', [\App\Http\Controllers\API\ContactController::class, 'updateStatus'])->name('contacts.update-status');
 });
