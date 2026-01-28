@@ -125,7 +125,7 @@ export default function MovieDetails({ params }: { params: Promise<{ id: string 
                                 <div className="flex flex-col">
                                     <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Released</span>
                                     <span className="text-white font-medium">
-                                        {new Date(movie.release_date).toLocaleDateString([], { month: 'long', day: 'numeric', year: 'numeric' })}
+                                        {movie?.release_date ? new Date(movie.release_date).toLocaleDateString([], { month: 'long', day: 'numeric', year: 'numeric' }) : 'TBA'}
                                     </span>
                                 </div>
                             </div>
@@ -222,7 +222,7 @@ export default function MovieDetails({ params }: { params: Promise<{ id: string 
                             <li className="flex justify-between">
                                 <span className="text-gray-500">Release Date</span>
                                 <span className="text-white">
-                                    {new Date(movie.release_date).toLocaleDateString([], { month: 'long', day: 'numeric', year: 'numeric' })}
+                                    {movie?.release_date ? new Date(movie.release_date).toLocaleDateString([], { month: 'long', day: 'numeric', year: 'numeric' }) : 'TBA'}
                                 </span>
                             </li>
                         </ul>

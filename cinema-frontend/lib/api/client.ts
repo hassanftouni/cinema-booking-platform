@@ -41,6 +41,7 @@ export interface Movie {
     writers?: string;
     status?: string;
     content_rating?: string;
+    release_date?: string;
     showtimes?: any[];
 }
 
