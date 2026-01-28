@@ -3,17 +3,18 @@
 import Echo from 'laravel-echo';
 import Pusher from 'pusher-js';
 
-// Define global interface for Echo
+// Define global interface for Echo - using 'reverb' as the argument
 declare global {
     interface Window {
-        Pusher: any;
-        Echo: Echo<'reverb'> | undefined;
+        Pusher: typeof Pusher;
+        Echo: Echo<'reverb'>;
     }
 }
 
+// Explicitly type the instance as Echo<'reverb'>
 let echoInstance: Echo<'reverb'> | null = null;
 
-export const getEcho = () => {
+export const getEcho = (): Echo<'reverb'> | null => {
     if (typeof window === 'undefined') return null;
 
     if (!echoInstance) {
