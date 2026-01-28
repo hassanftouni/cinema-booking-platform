@@ -7,11 +7,11 @@ import Pusher from 'pusher-js';
 declare global {
     interface Window {
         Pusher: any;
-        Echo: any;
+        Echo: Echo<'reverb'> | undefined;
     }
 }
 
-let echoInstance: Echo | null = null;
+let echoInstance: Echo<'reverb'> | null = null;
 
 export const getEcho = () => {
     if (typeof window === 'undefined') return null;
@@ -23,8 +23,8 @@ export const getEcho = () => {
             broadcaster: 'reverb',
             key: process.env.NEXT_PUBLIC_REVERB_APP_KEY,
             wsHost: process.env.NEXT_PUBLIC_REVERB_HOST,
-            wsPort: process.env.NEXT_PUBLIC_REVERB_PORT ?? 80,
-            wssPort: process.env.NEXT_PUBLIC_REVERB_PORT ?? 443,
+            wsPort: parseInt(process.env.NEXT_PUBLIC_REVERB_PORT ?? '80'),
+            wssPort: parseInt(process.env.NEXT_PUBLIC_REVERB_PORT ?? '443'),
             forceTLS: (process.env.NEXT_PUBLIC_REVERB_SCHEME ?? 'https') === 'https',
             enabledTransports: ['ws', 'wss'],
         });
