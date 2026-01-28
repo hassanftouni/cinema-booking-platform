@@ -1,0 +1,200 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { fetchAPI } from '../../../lib/api/client';
+import { motion } from 'framer-motion';
+import { Trash, User, ArrowLeft, Mail, Calendar, Home, Shield, ShieldOff, Check, X, Edit2 } from 'lucide-react';
+import Link from 'next/link';
+
+interface UserData {
+    id: number;
+    name: string;
+    email: string;
+    is_admin: boolean;
+    created_at: string;
+}
+
+export default function AdminUsersPage() {
+    const [users, setUsers] = useState<UserData[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [editingId, setEditingId] = useState<number | null>(null);
+    const [editForm, setEditForm] = useState({ name: '', email: '' });
+
+    useEffect(() => {
+        const loadUsers = async () => {
+            try {
+                const data = await fetchAPI('/admin/users');
+                setUsers(data.data || []);
+            } catch (error) {
+                console.error("Failed to fetch users", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        loadUsers();
+    }, []);
+
+    const handleToggleAdmin = async (user: UserData) => {
+        // Prevent demoting self (assuming user email can be checked)
+        const currentUserStr = localStorage.getItem('user');
+        if (currentUserStr) {
+            const currentUser = JSON.parse(currentUserStr);
+            if (currentUser.id === user.id && user.is_admin) {
+                alert("You cannot demote yourself!");
+                return;
+            }
+        }
+
+        try {
+            const updated = await fetchAPI(`/admin/users/${user.id}`, {
+                method: 'PUT',
+                body: JSON.stringify({ is_admin: !user.is_admin })
+            });
+            setUsers(prev => prev.map(u => u.id === user.id ? updated : u));
+        } catch (error) {
+            console.error("Failed to update role", error);
+        }
+    };
+
+    const startEditing = (user: UserData) => {
+        setEditingId(user.id);
+        setEditForm({ name: user.name, email: user.email });
+    };
+
+    const handleUpdateUser = async (id: number) => {
+        try {
+            const updated = await fetchAPI(`/admin/users/${id}`, {
+                method: 'PUT',
+                body: JSON.stringify(editForm)
+            });
+            setUsers(prev => prev.map(u => u.id === id ? updated : u));
+            setEditingId(null);
+        } catch (error) {
+            console.error("Failed to update user", error);
+            alert("Failed to update user. Check if email is already taken.");
+        }
+    };
+
+    const handleDelete = async (id: number) => {
+        if (!confirm('Are you sure you want to delete this user?')) return;
+
+        try {
+            await fetchAPI(`/admin/users/${id}`, { method: 'DELETE' });
+            setUsers(prev => prev.filter(u => u.id !== id));
+        } catch (error) {
+            console.error("Failed to delete user", error);
+            alert('Failed to delete user');
+        }
+    };
+
+    return (
+        <div className="min-h-screen bg-neutral-900 text-white p-8">
+            <div className="max-w-6xl mx-auto">
+                <div className="flex justify-between items-center mb-12">
+                    <div className="flex items-center gap-4">
+                        <Link href="/admin/movies" className="p-2 hover:bg-white/10 rounded-full transition-colors" title="Back to Movies">
+                            <ArrowLeft className="w-6 h-6 text-gray-400" />
+                        </Link>
+                        <Link href="/" className="p-2 hover:bg-white/10 rounded-full transition-colors text-gray-400 hover:text-gold-500" title="Back to Site">
+                            <Home className="w-6 h-6" />
+                        </Link>
+                        <h1 className="text-3xl font-bold font-serif text-gold-500">User Management</h1>
+                    </div>
+                </div>
+
+                {loading ? (
+                    <div className="text-center py-20">Loading...</div>
+                ) : (
+                    <div className="space-y-4">
+                        {users.map((user) => (
+                            <motion.div
+                                key={user.id}
+                                layout
+                                className="bg-white/5 border border-white/10 p-6 rounded-xl flex items-center justify-between hover:bg-white/10 transition-colors"
+                            >
+                                <div className="flex items-center gap-6 flex-1">
+                                    <div className="w-12 h-12 bg-white/10 rounded-full flex items-center justify-center">
+                                        {user.is_admin ? <Shield className="w-6 h-6 text-gold-500" /> : <User className="w-6 h-6 text-gray-400" />}
+                                    </div>
+
+                                    {editingId === user.id ? (
+                                        <div className="flex-1 flex gap-4">
+                                            <input
+                                                value={editForm.name}
+                                                onChange={e => setEditForm({ ...editForm, name: e.target.value })}
+                                                className="bg-black/30 border border-white/10 rounded px-3 py-1 text-sm outline-none focus:border-gold-500"
+                                            />
+                                            <input
+                                                value={editForm.email}
+                                                onChange={e => setEditForm({ ...editForm, email: e.target.value })}
+                                                className="bg-black/30 border border-white/10 rounded px-3 py-1 text-sm outline-none focus:border-gold-500"
+                                            />
+                                        </div>
+                                    ) : (
+                                        <div>
+                                            <h3 className="text-lg font-bold text-white mb-1 flex items-center gap-2">
+                                                {user.name}
+                                                {user.is_admin && <span className="text-[10px] bg-gold-600/20 text-gold-500 px-2 py-0.5 rounded-full uppercase tracking-tighter border border-gold-500/20">Admin</span>}
+                                            </h3>
+                                            <div className="flex gap-4 text-sm text-gray-400">
+                                                <div className="flex items-center gap-1">
+                                                    <Mail className="w-3 h-3" />
+                                                    {user.email}
+                                                </div>
+                                                <div className="flex items-center gap-1">
+                                                    <Calendar className="w-3 h-3" />
+                                                    Joined {new Date(user.created_at).toLocaleDateString()}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="flex items-center gap-2">
+                                    {editingId === user.id ? (
+                                        <>
+                                            <button
+                                                onClick={() => handleUpdateUser(user.id)}
+                                                className="p-2 bg-green-900/20 hover:bg-green-900/40 rounded-lg text-green-500 transition-colors border border-green-500/20"
+                                            >
+                                                <Check className="w-5 h-5" />
+                                            </button>
+                                            <button
+                                                onClick={() => setEditingId(null)}
+                                                className="p-2 bg-white/5 hover:bg-white/10 rounded-lg text-gray-400 transition-colors border border-white/10"
+                                            >
+                                                <X className="w-5 h-5" />
+                                            </button>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <button
+                                                onClick={() => handleToggleAdmin(user)}
+                                                className={`p-2 rounded-lg transition-colors border flex items-center gap-2 text-sm font-medium ${user.is_admin ? 'bg-orange-900/20 text-orange-400 border-orange-500/20 hover:bg-orange-900/40' : 'bg-gold-900/10 text-gold-500 border-gold-500/10 hover:bg-gold-900/20'}`}
+                                            >
+                                                {user.is_admin ? <ShieldOff className="w-4 h-4" /> : <Shield className="w-4 h-4" />}
+                                                {user.is_admin ? 'Demote' : 'Make Admin'}
+                                            </button>
+                                            <button
+                                                onClick={() => startEditing(user)}
+                                                className="p-2 bg-white/5 hover:bg-white/10 rounded-lg text-blue-400 transition-colors border border-white/10"
+                                            >
+                                                <Edit2 className="w-5 h-5" />
+                                            </button>
+                                            <button
+                                                onClick={() => handleDelete(user.id)}
+                                                className="p-2 bg-red-900/20 hover:bg-red-900/40 rounded-lg text-red-500 transition-colors border border-red-500/20"
+                                            >
+                                                <Trash className="w-5 h-5" />
+                                            </button>
+                                        </>
+                                    )}
+                                </div>
+                            </motion.div>
+                        ))}
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+}

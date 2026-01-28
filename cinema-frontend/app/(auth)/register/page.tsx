@@ -1,0 +1,213 @@
+'use client';
+
+import { useState } from 'react';
+import { motion } from 'framer-motion';
+import Link from 'next/link';
+import { Mail, Lock, User, ArrowRight, Film, Star } from 'lucide-react';
+
+import { useRouter } from 'next/navigation';
+import { fetchAPI } from '../../../lib/api/client';
+
+export default function Register() {
+    const router = useRouter();
+    const [name, setName] = useState('');
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState('');
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setError('');
+        setIsLoading(true);
+
+        if (password !== confirmPassword) {
+            setError("Passwords do not match");
+            setIsLoading(false);
+            return;
+        }
+
+        try {
+            const data = await fetchAPI('/register', {
+                method: 'POST',
+                body: JSON.stringify({
+                    name,
+                    email,
+                    password,
+                    password_confirmation: confirmPassword
+                })
+            });
+
+            // Store token and user info
+            localStorage.setItem('token', data.access_token);
+            localStorage.setItem('user', JSON.stringify(data.user));
+            // Redirect to home
+            router.push('/');
+        } catch (err: any) {
+            console.error(err);
+            setError(err.message || 'Registration failed');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const fadeInUp = {
+        initial: { opacity: 0, y: 20 },
+        animate: { opacity: 1, y: 0 },
+        transition: { duration: 0.5 }
+    };
+
+    return (
+        <div className="min-h-screen flex bg-cinema-black overflow-hidden relative">
+            {/* Decorative Background Elements */}
+            <div className="absolute top-0 left-0 w-full h-full overflow-hidden -z-10 pointer-events-none">
+                <div className="absolute top-[-20%] left-[-10%] w-[600px] h-[600px] rounded-full bg-gold-600/5 blur-[120px]" />
+                <div className="absolute bottom-[-20%] right-[-10%] w-[500px] h-[500px] rounded-full bg-red-900/10 blur-[100px]" />
+            </div>
+
+            {/* Left Section - Visuals (Order swapped on mobile via flex-col-reverse if needed, but hidden lg:flex handles desktop) */}
+            <motion.div
+                initial={{ opacity: 0, x: -50 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.8, ease: "easeOut" }}
+                className="hidden lg:flex lg:w-1/2 relative items-center justify-center p-12"
+            >
+                <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1517604931442-710c8ef555c9?q=80&w=2070&auto=format&fit=crop')] bg-cover bg-center opacity-30 mix-blend-overlay" />
+                <div className="absolute inset-0 bg-gradient-to-r from-cinema-black via-transparent to-cinema-black/90" />
+
+                <div className="z-10 text-center space-y-6 max-w-lg">
+                    <motion.div
+                        initial={{ scale: 0.8 }}
+                        animate={{ scale: 1 }}
+                        transition={{ duration: 1, type: "spring" }}
+                    >
+                        <h1 className="text-5xl font-serif font-bold text-white mb-4">
+                            Join the <span className="text-gold-gradient">Elite</span>
+                        </h1>
+                    </motion.div>
+
+                    <p className="text-xl text-gray-300 leading-relaxed font-light">
+                        Create an account to unlock exclusive screenings, earn loyalty rewards, and book the best seats in the house.
+                    </p>
+
+                    <div className="grid grid-cols-2 gap-4 mt-8">
+                        <div className="glass-panel p-4 rounded-xl text-center">
+                            <div className="text-2xl font-bold text-gold-500 mb-1">VIP</div>
+                            <div className="text-xs text-gray-400">Access Level</div>
+                        </div>
+                        <div className="glass-panel p-4 rounded-xl text-center">
+                            <div className="text-2xl font-bold text-gold-500 mb-1">0%</div>
+                            <div className="text-xs text-gray-400">Booking Fees</div>
+                        </div>
+                    </div>
+                </div>
+            </motion.div>
+
+            {/* Right Section - Form */}
+            <motion.div
+                initial={{ opacity: 0, x: 50 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
+                className="w-full lg:w-1/2 flex items-center justify-center p-8 lg:p-24 relative"
+            >
+                <div className="w-full max-w-md space-y-8">
+                    <div className="text-center lg:text-left">
+                        <h2 className="text-3xl font-bold text-white mb-2">Create Account</h2>
+                        <p className="text-gray-400">Begin your premium cinema journey.</p>
+                    </div>
+
+                    <form onSubmit={handleSubmit} className="space-y-5">
+                        {error && (
+                            <motion.div
+                                initial={{ opacity: 0, y: -10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className="p-3 bg-red-500/10 border border-red-500/50 rounded-lg text-red-400 text-sm text-center"
+                            >
+                                {error}
+                            </motion.div>
+                        )}
+                        <motion.div variants={fadeInUp} initial="initial" animate="animate">
+                            <label className="block text-sm font-medium text-gold-100/80 mb-2 ml-1">Full Name</label>
+                            <div className="relative group">
+                                <input
+                                    type="text"
+                                    value={name}
+                                    onChange={(e) => setName(e.target.value)}
+                                    className="w-full bg-white/5 border border-white/10 rounded-xl px-12 py-4 text-white placeholder-gray-500 focus:border-gold-500 focus:ring-1 focus:ring-gold-500 focus:bg-white/10 transition-all outline-none"
+                                    placeholder="John Doe"
+                                />
+                                <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-gold-500 transition-colors" />
+                            </div>
+                        </motion.div>
+
+                        <motion.div variants={fadeInUp} initial="initial" animate="animate" transition={{ delay: 0.1 }}>
+                            <label className="block text-sm font-medium text-gold-100/80 mb-2 ml-1">Email Address</label>
+                            <div className="relative group">
+                                <input
+                                    type="email"
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    className="w-full bg-white/5 border border-white/10 rounded-xl px-12 py-4 text-white placeholder-gray-500 focus:border-gold-500 focus:ring-1 focus:ring-gold-500 focus:bg-white/10 transition-all outline-none"
+                                    placeholder="name@example.com"
+                                />
+                                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-gold-500 transition-colors" />
+                            </div>
+                        </motion.div>
+
+                        <motion.div variants={fadeInUp} initial="initial" animate="animate" transition={{ delay: 0.2 }}>
+                            <label className="block text-sm font-medium text-gold-100/80 mb-2 ml-1">Password</label>
+                            <div className="relative group">
+                                <input
+                                    type="password"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    className="w-full bg-white/5 border border-white/10 rounded-xl px-12 py-4 text-white placeholder-gray-500 focus:border-gold-500 focus:ring-1 focus:ring-gold-500 focus:bg-white/10 transition-all outline-none"
+                                    placeholder="••••••••"
+                                />
+                                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-gold-500 transition-colors" />
+                            </div>
+                        </motion.div>
+
+                        <motion.div variants={fadeInUp} initial="initial" animate="animate" transition={{ delay: 0.3 }}>
+                            <label className="block text-sm font-medium text-gold-100/80 mb-2 ml-1">Confirm Password</label>
+                            <div className="relative group">
+                                <input
+                                    type="password"
+                                    value={confirmPassword}
+                                    onChange={(e) => setConfirmPassword(e.target.value)}
+                                    className="w-full bg-white/5 border border-white/10 rounded-xl px-12 py-4 text-white placeholder-gray-500 focus:border-gold-500 focus:ring-1 focus:ring-gold-500 focus:bg-white/10 transition-all outline-none"
+                                    placeholder="••••••••"
+                                />
+                                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-gold-500 transition-colors" />
+                            </div>
+                        </motion.div>
+
+                        <motion.button
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                            className="w-full bg-gradient-to-r from-gold-600 to-gold-500 text-black font-bold py-4 rounded-xl shadow-lg shadow-gold-900/20 hover:shadow-gold-500/30 hover:brightness-110 transition-all flex items-center justify-center gap-2 group mt-4"
+                            disabled={isLoading}
+                        >
+                            {isLoading ? (
+                                <div className="w-6 h-6 border-2 border-black/30 border-t-black rounded-full animate-spin" />
+                            ) : (
+                                <>
+                                    Register
+                                    <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                                </>
+                            )}
+                        </motion.button>
+                    </form>
+
+                    <p className="text-center text-gray-500">
+                        Already have an account?{' '}
+                        <Link href="/login" className="text-gold-500 hover:text-gold-400 font-medium hover:underline transition-all">
+                            Sign In
+                        </Link>
+                    </p>
+                </div>
+            </motion.div>
+        </div>
+    );
+}
