@@ -15,21 +15,28 @@ class TenantMiddleware
      */
     public function handle(Request $request, Closure $next): Response
     {
-        // Simple check for X-Tenant-ID header for now.
-        // In production, this would likely also check subdomains or API keys.
+        try {
+            \Log::info('Entering TenantMiddleware for: ' . $request->fullUrl());
 
-        $tenantId = $request->header('X-Tenant-ID');
+            // Simple check for X-Tenant-ID header for now.
+            // In production, this would likely also check subdomains or API keys.
 
-        if (!$tenantId) {
-            // Optional: for development, allow a default tenant or fail
-            // For now, we will just proceed but log a warning or set a null tenant
-            // return response()->json(['message' => 'X-Tenant-ID header is required'], 400);
+            $tenantId = $request->header('X-Tenant-ID');
+
+            if (!$tenantId) {
+                \Log::warning('X-Tenant-ID header is missing');
+                // For now, let's not block if it's missing, just log it. 
+                // In production you might want: return response()->json(['message' => 'Missing header'], 400);
+            }
+
+            // Store tenant ID in a singleton or request attribute for later use
+            // e.g. Context::set('tenant_id', $tenantId);
+            $request->attributes->set('tenant_id', $tenantId);
+
+            return $next($request);
+        } catch (\Throwable $e) {
+            \Log::error('TenantMiddleware CRASH: ' . $e->getMessage());
+            return response()->json(['error' => 'Middleware Error', 'message' => $e->getMessage()], 500);
         }
-
-        // Store tenant ID in a singleton or request attribute for later use
-        // e.g. Context::set('tenant_id', $tenantId);
-        $request->attributes->set('tenant_id', $tenantId);
-
-        return $next($request);
     }
 }
