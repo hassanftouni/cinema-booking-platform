@@ -15,15 +15,11 @@ class AuthController extends Controller
     public function register(Request $request)
     {
         try {
-            \Log::info('Registration started for email: ' . $request->email);
-
             $request->validate([
                 'name' => 'required|string|max:255',
                 'email' => 'required|string|email|max:255|unique:users',
                 'password' => 'required|string|min:8|confirmed',
             ]);
-
-            \Log::info('Step 1: Validation passed');
 
             $user = User::create([
                 'name' => $request->name,
@@ -31,14 +27,10 @@ class AuthController extends Controller
                 'password' => $request->password,
             ]);
 
-            \Log::info('Step 2: User created in DB with ID: ' . $user->id);
-
             try {
-                \Log::info('Step 3: Attempting to fire Registered event...');
                 event(new Registered($user));
-                \Log::info('Step 4: Registered event fired successfully');
             } catch (\Throwable $e) {
-                \Log::error('STEP 3 ERROR (Mail failure): ' . $e->getMessage());
+                \Log::error('Registration Mail failure: ' . $e->getMessage());
                 return response()->json([
                     'message' => 'Registration successful, but we could not send the verification email.',
                     'debug_mail_error' => $e->getMessage(),
@@ -52,10 +44,9 @@ class AuthController extends Controller
             ], 201);
 
         } catch (\Throwable $th) {
-            \Log::error('CRITICAL REGISTRATION ERROR: ' . $th->getMessage());
-            \Log::error($th->getTraceAsString()); // This will show us the REAL error in Railway logs
+            \Log::error('Registration Error: ' . $th->getMessage());
             return response()->json([
-                'error_type' => 'Critical Registration Error',
+                'error_type' => 'Registration Error',
                 'message' => $th->getMessage(),
                 'file' => $th->getFile(),
                 'line' => $th->getLine(),

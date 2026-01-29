@@ -16,21 +16,13 @@ class TenantMiddleware
     public function handle(Request $request, Closure $next): Response
     {
         try {
-            \Log::info('Entering TenantMiddleware for: ' . $request->fullUrl());
-
-            // Simple check for X-Tenant-ID header for now.
-            // In production, this would likely also check subdomains or API keys.
-
             $tenantId = $request->header('X-Tenant-ID');
 
             if (!$tenantId) {
-                \Log::warning('X-Tenant-ID header is missing');
                 // For now, let's not block if it's missing, just log it. 
                 // In production you might want: return response()->json(['message' => 'Missing header'], 400);
             }
 
-            // Store tenant ID in a singleton or request attribute for later use
-            // e.g. Context::set('tenant_id', $tenantId);
             $request->attributes->set('tenant_id', $tenantId);
 
             return $next($request);
