@@ -25,12 +25,10 @@ export default function Navbar() {
     });
 
     const [isLoggedIn, setIsLoggedIn] = useState(false);
-    const [isVerified, setIsVerified] = useState(true);
     const [userName, setUserName] = useState<string | null>(null);
     const [isAdmin, setIsAdmin] = useState(false);
     const [unreadInquiries, setUnreadInquiries] = useState(0);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-    const [isResending, setIsResending] = useState(false);
 
     const handleLogout = () => {
         localStorage.removeItem('token');
@@ -63,7 +61,6 @@ export default function Navbar() {
                 try {
                     const user = JSON.parse(userStr);
                     setUserName(user.name);
-                    setIsVerified(!!user.email_verified_at);
                     checkAdmin(user);
                 } catch (e) { }
             }
@@ -72,7 +69,6 @@ export default function Navbar() {
                 .then(user => {
                     localStorage.setItem('user', JSON.stringify(user));
                     setUserName(user.name);
-                    setIsVerified(!!user.email_verified_at);
                     checkAdmin(user);
 
                     if (user.is_admin || user.email === 'hassan.ftounne@gmail.com') {
@@ -106,18 +102,6 @@ export default function Navbar() {
         };
     }, [pathname]);
 
-    const handleResendVerification = async () => {
-        setIsResending(true);
-        try {
-            await fetchAPI('/email/resend', { method: 'POST' });
-            alert('Verification email sent! Please check your inbox.');
-        } catch (error: any) {
-            alert(error.message || 'Failed to resend verification email.');
-        } finally {
-            setIsResending(false);
-        }
-    };
-
     return (
         <motion.nav
             variants={{
@@ -132,26 +116,6 @@ export default function Navbar() {
                 }`}
         >
             <div className={`${scrolled ? 'py-4' : 'py-6'} transition-all duration-500`}>
-                {isLoggedIn && !isVerified && (
-                    <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: 'auto' }}
-                        className="bg-red-500/20 border-b border-red-500/30 py-2"
-                    >
-                        <div className="container mx-auto px-6 flex items-center justify-between gap-4">
-                            <p className="text-[10px] md:text-xs font-medium text-red-200">
-                                Your email address is not verified. Please check your inbox or click to resend.
-                            </p>
-                            <button
-                                onClick={handleResendVerification}
-                                disabled={isResending}
-                                className="text-[10px] md:text-xs font-bold text-white bg-red-600 hover:bg-red-500 px-3 py-1 rounded transition-colors whitespace-nowrap"
-                            >
-                                {isResending ? 'Sending...' : 'Resend Email'}
-                            </button>
-                        </div>
-                    </motion.div>
-                )}
                 {userName && (
                     <div className="py-1.5 mb-2">
                         <div className="container mx-auto px-6">

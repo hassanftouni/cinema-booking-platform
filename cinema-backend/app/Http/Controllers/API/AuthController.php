@@ -27,19 +27,13 @@ class AuthController extends Controller
                 'password' => $request->password,
             ]);
 
-            try {
-                event(new Registered($user));
-            } catch (\Throwable $e) {
-                \Log::error('Registration Mail failure: ' . $e->getMessage());
-                return response()->json([
-                    'message' => 'Registration successful, but we could not send the verification email.',
-                    'debug_mail_error' => $e->getMessage(),
-                    'user' => $user,
-                ], 201);
-            }
+            // Create token immediately for instant login
+            $token = $user->createToken('auth_token')->plainTextToken;
 
             return response()->json([
-                'message' => 'Registration successful. Please check your email to verify your account.',
+                'message' => 'Registration successful!',
+                'access_token' => $token,
+                'token_type' => 'Bearer',
                 'user' => $user,
             ], 201);
 
@@ -67,12 +61,6 @@ class AuthController extends Controller
             throw ValidationException::withMessages([
                 'email' => ['Invalid credentials'],
             ]);
-        }
-
-        if (!$user->hasVerifiedEmail()) {
-            return response()->json([
-                'message' => 'Your email address is not verified. Please check your inbox for a verification link.',
-            ], 403);
         }
 
         $token = $user->createToken('auth_token')->plainTextToken;

@@ -41,8 +41,14 @@ export default function Register() {
                 })
             });
 
-            // If we're here, account is created and verification email is sent
-            setIsRegistered(true);
+            // Handle immediate login
+            if (data.access_token) {
+                localStorage.setItem('token', data.access_token);
+                localStorage.setItem('user', JSON.stringify(data.user));
+                window.location.href = '/';
+            } else {
+                setIsRegistered(true);
+            }
         } catch (err: any) {
             console.error(err);
             setError(err.message || 'Registration failed');
