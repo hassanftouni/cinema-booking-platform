@@ -14,33 +14,45 @@ class AuthController extends Controller
 {
     public function register(Request $request)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:8|confirmed',
-        ]);
-
-        $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-        ]);
-
         try {
-            event(new Registered($user));
-        } catch (\Throwable $e) {
-            \Log::error('Mail sending failed during registration: ' . $e->getMessage());
+            $request->validate([
+                'name' => 'required|string|max:255',
+                'email' => 'required|string|email|max:255|unique:users',
+                'password' => 'required|string|min:8|confirmed',
+            ]);
+
+            $user = User::create([
+                'name' => $request->name,
+                'email' => $request->email,
+                'password' => $request->password, // Model cast 'hashed' handles this. No Hash::make needed.
+            ]);
+
+            try {
+                event(new Registered($user));
+            } catch (\Throwable $e) {
+                \Log::error('Mail sending failed during registration: ' . $e->getMessage());
+                return response()->json([
+                    'message' => 'Registration successful, but we could not send the verification email.',
+                    'debug_mail_error' => $e->getMessage(),
+                    'user' => $user,
+                ], 201);
+            }
+
             return response()->json([
-                'message' => 'Registration successful, but we could not send the verification email. Please try to resend it from your profile or contact support.',
-                'error' => $e->getMessage(),
+                'message' => 'Registration successful. Please check your email to verify your account.',
                 'user' => $user,
             ], 201);
-        }
 
-        return response()->json([
-            'message' => 'Registration successful. Please check your email to verify your account.',
-            'user' => $user,
-        ], 201);
+        } catch (\Throwable $th) {
+            \Log::error('CRITICAL REGISTRATION ERROR: ' . $th->getMessage());
+            \Log::error($th->getTraceAsString()); // This will show us the REAL error in Railway logs
+            return response()->json([
+                'error_type' => 'Critical Registration Error',
+                'message' => $th->getMessage(),
+                'file' => $th->getFile(),
+                'line' => $th->getLine(),
+            ], 500);
+        }
     }
 
     public function login(Request $request)
