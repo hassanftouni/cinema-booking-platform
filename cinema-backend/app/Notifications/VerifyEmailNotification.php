@@ -53,7 +53,13 @@ class VerifyEmailNotification extends Notification
 
         // Extract ID and Hash from the path
         // Path is /api/email/verify/{id}/{hash}
-        $pathParts = explode('/', trim($urlParts['path'], '/'));
+        $pathParts = explode('/', trim($urlParts['path'] ?? '', '/'));
+
+        if (count($pathParts) < 2) {
+            // Fallback if URL parsing fails for some reason
+            return $frontendUrl . '/verify-email?' . ($urlParts['query'] ?? '');
+        }
+
         $id = $pathParts[count($pathParts) - 2];
         $hash = $pathParts[count($pathParts) - 1];
 

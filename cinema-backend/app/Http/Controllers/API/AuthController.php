@@ -28,10 +28,11 @@ class AuthController extends Controller
 
         try {
             event(new Registered($user));
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             \Log::error('Mail sending failed during registration: ' . $e->getMessage());
             return response()->json([
                 'message' => 'Registration successful, but we could not send the verification email. Please try to resend it from your profile or contact support.',
+                'error' => $e->getMessage(),
                 'user' => $user,
             ], 201);
         }
