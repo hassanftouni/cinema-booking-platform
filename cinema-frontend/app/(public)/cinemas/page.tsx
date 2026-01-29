@@ -24,7 +24,7 @@ export default function CinemasPage() {
             <Navbar />
 
             {/* Hero */}
-            <section className="relative h-[50vh] flex items-center justify-center overflow-hidden">
+            <section className="relative h-[65vh] flex items-center justify-center overflow-hidden pt-32">
                 <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1440404653325-ab127d49abc1?q=80&w=2070&auto=format&fit=crop')] bg-cover bg-center opacity-30 grayscale" />
                 <div className="absolute inset-0 bg-gradient-to-t from-cinema-black via-cinema-black/40 to-transparent" />
 
@@ -34,90 +34,114 @@ export default function CinemasPage() {
                     transition={{ duration: 1.5, ease: [0.22, 1, 0.36, 1] }}
                     className="z-10 text-center space-y-4 px-6"
                 >
-                    <motion.div
+                    <motion.button
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="inline-flex items-center gap-2 px-5 py-2 bg-gold-500/10 border border-gold-500/20 rounded-full text-gold-500 text-[10px] uppercase font-black tracking-[0.2em]"
+                        onClick={() => document.getElementById('locations')?.scrollIntoView({ behavior: 'smooth' })}
+                        className="inline-flex items-center gap-2 px-5 py-2 bg-gold-500/10 border border-gold-500/20 rounded-full text-gold-500 text-[10px] uppercase font-black tracking-[0.2em] hover:bg-gold-500 hover:text-black transition-all cursor-pointer"
                     >
                         <MapPin className="w-3 h-3" />
                         Our Locations
-                    </motion.div>
-                    <h1 className="text-6xl md:text-8xl font-serif font-black text-white tracking-tighter uppercase">
+                    </motion.button>
+                    <h1 className="text-4xl sm:text-6xl md:text-8xl font-serif font-black text-white tracking-tighter uppercase">
                         Cinema <span className="text-gold-gradient">City</span> Hubs
                     </h1>
                     <p className="text-gray-400 text-lg max-w-xl mx-auto font-light leading-relaxed tracking-wide">
-                        State-of-the-art cinematic spaces designed for the ultimate movie-goer. Find your nearest theater and enter the magic.
+                        Situated in the heart of Beirut Central District, specifically within the Beirut Souks complex.
                     </p>
                 </motion.div>
             </section>
 
             {/* Cinemas Grid */}
-            <section className="container mx-auto px-6 py-24">
+            <section id="locations" className="container mx-auto px-6 py-24 scroll-mt-24">
                 {loading ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
                         {[1, 2].map(i => <div key={i} className="h-80 bg-white/5 animate-pulse rounded-[3rem]" />)}
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-                        {cinemas.map((cinema, i) => (
-                            <motion.div
-                                key={cinema.id}
-                                initial={{ opacity: 0, y: 30 }}
-                                whileInView={{ opacity: 1, y: 0 }}
-                                viewport={{ once: true }}
-                                transition={{ delay: i * 0.1, duration: 1, ease: [0.22, 1, 0.36, 1] }}
-                            >
-                                <TiltCard className="relative group rounded-[3.5rem] overflow-hidden bg-white/5 border border-white/5 hover:border-gold-500/30 transition-all duration-700 shadow-2xl">
-                                    <div className="absolute inset-0 bg-gradient-to-br from-gold-500/5 via-transparent to-transparent" />
+                    <div className="grid grid-cols-1 gap-12">
+                        <motion.div
+                            initial={{ opacity: 0, y: 30 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            viewport={{ once: true }}
+                            transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
+                        >
+                            <TiltCard className="relative group rounded-[3.5rem] overflow-hidden bg-white/5 border border-white/5 hover:border-gold-500/30 transition-all duration-700 shadow-2xl">
+                                <div className="absolute inset-0 bg-gradient-to-br from-gold-500/5 via-transparent to-transparent" />
 
-                                    <div className="p-12 space-y-8 relative">
-                                        <div className="flex justify-between items-start">
-                                            <div className="w-20 h-20 rounded-3xl bg-gold-500/10 border border-gold-500/20 flex items-center justify-center text-gold-500 group-hover:bg-gold-500 group-hover:text-black transition-all duration-500">
-                                                <MapPin className="w-10 h-10" />
-                                            </div>
+                                <div className="p-6 md:p-12 space-y-8 relative">
+                                    <div className="flex justify-between items-start">
+                                        <div className="w-20 h-20 rounded-3xl bg-gold-500/10 border border-gold-500/20 flex items-center justify-center text-gold-500 group-hover:bg-gold-500 group-hover:text-black transition-all duration-500">
+                                            <MapPin className="w-10 h-10" />
+                                        </div>
+                                        <div className="flex flex-col gap-2 items-end">
                                             <span className="px-4 py-2 rounded-full bg-white/5 border border-white/10 text-[10px] font-black tracking-widest text-gray-400 group-hover:text-gold-500 group-hover:border-gold-500/30 transition-all">
-                                                {cinema.halls?.length || 0} PREMIUM HALLS
+                                                BEIRUT SOUKS
+                                            </span>
+                                            <span className="px-4 py-2 rounded-full bg-gold-900/20 border border-gold-500/10 text-[10px] font-black tracking-widest text-gold-500">
+                                                PREMIUM EXPERIENCE
                                             </span>
                                         </div>
-
-                                        <div className="space-y-4">
-                                            <h2 className="text-5xl font-serif font-black text-white uppercase tracking-tighter leading-none">{cinema.name}</h2>
-                                            <p className="text-gray-400 text-lg font-light flex items-center gap-2">
-                                                <Info className="w-4 h-4 text-gold-500" />
-                                                {cinema.location}
-                                            </p>
-                                        </div>
-
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-6 border-t border-white/5">
-                                            <div className="space-y-1">
-                                                <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Contact Info</span>
-                                                <p className="text-sm font-medium text-white flex items-center gap-2">
-                                                    <Mail className="w-3 h-3 text-gold-500" />
-                                                    {cinema.contact_email}
-                                                </p>
-                                            </div>
-                                            <div className="space-y-1">
-                                                <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Opening Hours</span>
-                                                <p className="text-sm font-medium text-white flex items-center gap-2">
-                                                    <Clock className="w-3 h-3 text-gold-500" />
-                                                    10:00 AM - 12:00 AM
-                                                </p>
-                                            </div>
-                                        </div>
-
-                                        <motion.button
-                                            whileHover={{ x: 15 }}
-                                            className="pt-6 flex items-center gap-4 text-gold-500 font-black uppercase tracking-[0.4em] text-[10px]"
-                                        >
-                                            Explore This Theater <ArrowRight className="w-4 h-4" />
-                                        </motion.button>
                                     </div>
 
-                                    {/* Ambient Glow Reflector */}
-                                    <div className="absolute bottom-0 right-0 w-64 h-64 bg-gold-500/5 blur-[100px] rounded-full -mr-32 -mb-32 group-hover:bg-gold-500/10 transition-all duration-700" />
-                                </TiltCard>
-                            </motion.div>
-                        ))}
+                                    <div className="space-y-4">
+                                        <h2 className="text-3xl md:text-5xl font-serif font-black text-white uppercase tracking-tighter leading-none">Cinema City Beirut</h2>
+                                        <p className="text-gray-400 text-lg font-light flex items-start gap-2 max-w-2xl">
+                                            <Info className="w-5 h-5 text-gold-500 shrink-0 mt-1" />
+                                            Down Town, Saad Zaghloul Street, Building #149, Beirut.
+                                        </p>
+                                        <p className="text-gray-400 text-sm font-light pl-7">
+                                            Parking: Ample underground parking is available within the Beirut Souks complex (specifically the red and purple parking zones).
+                                        </p>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 pt-6 border-t border-white/5">
+                                        <div className="space-y-1">
+                                            <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Contact</span>
+                                            <p className="text-sm font-medium text-white flex items-center gap-2">
+                                                <Phone className="w-3 h-3 text-gold-500" />
+                                                +961 1 995 195
+                                            </p>
+                                        </div>
+                                        <div className="space-y-1">
+                                            <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Opening Hours</span>
+                                            <p className="text-sm font-medium text-white flex items-center gap-2">
+                                                <Clock className="w-3 h-3 text-gold-500" />
+                                                10:00 AM - 12:00 AM
+                                            </p>
+                                        </div>
+                                        <div className="space-y-1">
+                                            <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Email</span>
+                                            <p className="text-sm font-medium text-white flex items-center gap-2">
+                                                <Mail className="w-3 h-3 text-gold-500" />
+                                                info@cinemacity.com.lb
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex flex-col sm:flex-row gap-4 pt-6">
+                                        <a
+                                            href="https://www.google.com/maps/dir//Cinemacity,+Beirut/@33.8948875,35.5007049,15.5z/data=!4m9!4m8!1m0!1m5!1m1!1s0x151f16e8a75d45bd:0x226a424c65dd41e2!2m2!1d35.5047437!2d33.9003648!3e0?entry=ttu&g_ep=EgoyMDI2MDEyNS4wIKXMDSoKLDEwMDc5MjA2OUgBUAM%3D"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="px-6 py-3 bg-gold-600 hover:bg-gold-500 text-black font-bold uppercase tracking-widest text-xs rounded-full shadow-lg shadow-gold-600/20 transition-all flex items-center gap-2 w-fit"
+                                        >
+                                            <MapPin className="w-4 h-4" />
+                                            Get Directions
+                                        </a>
+                                        <motion.button
+                                            whileHover={{ x: 15 }}
+                                            className="px-6 py-3 border border-white/10 hover:border-white/30 rounded-full flex items-center gap-2 text-gold-500 font-black uppercase tracking-widest text-xs w-fit"
+                                        >
+                                            View Showtimes <ArrowRight className="w-4 h-4" />
+                                        </motion.button>
+                                    </div>
+                                </div>
+
+                                {/* Ambient Glow Reflector */}
+                                <div className="absolute bottom-0 right-0 w-64 h-64 bg-gold-500/5 blur-[100px] rounded-full -mr-32 -mb-32 group-hover:bg-gold-500/10 transition-all duration-700" />
+                            </TiltCard>
+                        </motion.div>
                     </div>
                 )}
             </section>

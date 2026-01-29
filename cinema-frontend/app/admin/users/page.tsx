@@ -90,15 +90,15 @@ export default function AdminUsersPage() {
     return (
         <div className="min-h-screen bg-neutral-900 text-white p-8">
             <div className="max-w-6xl mx-auto">
-                <div className="flex justify-between items-center mb-12">
-                    <div className="flex items-center gap-4">
+                <div className="flex flex-col md:flex-row justify-between items-center mb-8 md:mb-12 gap-6 md:gap-0">
+                    <div className="flex items-center gap-4 w-full md:w-auto justify-center md:justify-start">
                         <Link href="/admin/movies" className="p-2 hover:bg-white/10 rounded-full transition-colors" title="Back to Movies">
                             <ArrowLeft className="w-6 h-6 text-gray-400" />
                         </Link>
                         <Link href="/" className="p-2 hover:bg-white/10 rounded-full transition-colors text-gray-400 hover:text-gold-500" title="Back to Site">
                             <Home className="w-6 h-6" />
                         </Link>
-                        <h1 className="text-3xl font-bold font-serif text-gold-500">User Management</h1>
+                        <h1 className="text-2xl md:text-3xl font-bold font-serif text-gold-500">User Management</h1>
                     </div>
                 </div>
 
@@ -110,33 +110,35 @@ export default function AdminUsersPage() {
                             <motion.div
                                 key={user.id}
                                 layout
-                                className="bg-white/5 border border-white/10 p-6 rounded-xl flex items-center justify-between hover:bg-white/10 transition-colors"
+                                className="bg-white/5 border border-white/10 p-6 rounded-xl flex flex-col md:flex-row items-center justify-between hover:bg-white/10 transition-colors gap-6"
                             >
-                                <div className="flex items-center gap-6 flex-1">
-                                    <div className="w-12 h-12 bg-white/10 rounded-full flex items-center justify-center">
+                                <div className="flex flex-col md:flex-row items-center gap-6 flex-1 text-center md:text-left">
+                                    <div className="w-12 h-12 bg-white/10 rounded-full flex items-center justify-center shrink-0">
                                         {user.is_admin ? <Shield className="w-6 h-6 text-gold-500" /> : <User className="w-6 h-6 text-gray-400" />}
                                     </div>
 
                                     {editingId === user.id ? (
-                                        <div className="flex-1 flex gap-4">
+                                        <div className="flex-1 flex flex-col md:flex-row gap-4 w-full">
                                             <input
                                                 value={editForm.name}
                                                 onChange={e => setEditForm({ ...editForm, name: e.target.value })}
-                                                className="bg-black/30 border border-white/10 rounded px-3 py-1 text-sm outline-none focus:border-gold-500"
+                                                className="bg-black/30 border border-white/10 rounded px-3 py-1 text-sm outline-none focus:border-gold-500 w-full"
+                                                placeholder="Name"
                                             />
                                             <input
                                                 value={editForm.email}
                                                 onChange={e => setEditForm({ ...editForm, email: e.target.value })}
-                                                className="bg-black/30 border border-white/10 rounded px-3 py-1 text-sm outline-none focus:border-gold-500"
+                                                className="bg-black/30 border border-white/10 rounded px-3 py-1 text-sm outline-none focus:border-gold-500 w-full"
+                                                placeholder="Email"
                                             />
                                         </div>
                                     ) : (
-                                        <div>
-                                            <h3 className="text-lg font-bold text-white mb-1 flex items-center gap-2">
+                                        <div className="w-full">
+                                            <h3 className="text-lg font-bold text-white mb-2 md:mb-1 flex flex-col md:flex-row items-center gap-2 justify-center md:justify-start">
                                                 {user.name}
                                                 {user.is_admin && <span className="text-[10px] bg-gold-600/20 text-gold-500 px-2 py-0.5 rounded-full uppercase tracking-tighter border border-gold-500/20">Admin</span>}
                                             </h3>
-                                            <div className="flex gap-4 text-sm text-gray-400">
+                                            <div className="flex flex-col md:flex-row gap-2 md:gap-4 text-sm text-gray-400 items-center md:items-start">
                                                 <div className="flex items-center gap-1">
                                                     <Mail className="w-3 h-3" />
                                                     {user.email}

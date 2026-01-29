@@ -2,13 +2,14 @@
 
 import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion';
 import { Play, Star, Clock, Info } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface MovieProps {
+    id: string; // Added ID
     title: string;
     poster: string;
     rating: string;
-    genre: string;
+    genre: string[];
     duration: string;
     format: string; // IMAX, 3D, etc.
     contentRating?: string;
@@ -25,6 +26,8 @@ const getBadgeColor = (rating: string) => {
         default: return 'bg-zinc-700';
     }
 };
+
+import Link from 'next/link'; // Import Link
 
 export default function MovieCard({ movie }: { movie: MovieProps }) {
     const [isHovered, setIsHovered] = useState(false);
@@ -51,6 +54,15 @@ export default function MovieCard({ movie }: { movie: MovieProps }) {
         y.set(mouseYPct);
     };
 
+    const [isMobile, setIsMobile] = useState(false);
+
+    useEffect(() => {
+        const checkMobile = () => setIsMobile(window.innerWidth < 768);
+        checkMobile();
+        window.addEventListener('resize', checkMobile);
+        return () => window.removeEventListener('resize', checkMobile);
+    }, []);
+
     const handleMouseLeave = () => {
         x.set(0);
         y.set(0);
@@ -58,84 +70,93 @@ export default function MovieCard({ movie }: { movie: MovieProps }) {
     };
 
     return (
-        <motion.div
-            style={{
-                rotateX,
-                rotateY,
-                transformStyle: "preserve-3d",
-            }}
-            onMouseMove={handleMouseMove}
-            onMouseEnter={() => setIsHovered(true)}
-            onMouseLeave={handleMouseLeave}
-            className="relative w-full aspect-[2/3] rounded-xl bg-cinema-gray shadow-xl cursor-pointer group perspective-1000"
-        >
-            {/* Poster Image */}
-            <div className="absolute inset-0 rounded-xl overflow-hidden bg-cinema-gray">
-                <img
-                    src={movie.poster}
-                    alt=""
-                    className="absolute inset-0 w-full h-full object-cover blur-xl opacity-30 scale-125"
-                />
-                <img
-                    src={movie.poster}
-                    alt={movie.title}
-                    className="absolute inset-0 z-10 w-full h-full object-contain"
-                />
-                {/* Gradient Overlay */}
-                <div className={`absolute inset-0 z-20 bg-gradient-to-t from-black via-black/20 to-transparent transition-opacity duration-300 ${isHovered ? 'opacity-90' : 'opacity-60'}`} />
-            </div>
-
-            {/* Format Badge */}
-            <div className="absolute top-4 right-4 z-20 flex flex-col gap-2 items-end">
-                <span className="px-2 py-1 text-xs font-bold text-black bg-gold-500 rounded shadow-lg shadow-gold-500/20">
-                    {movie.format}
-                </span>
-                {movie.contentRating && (
-                    <span className={`px-2 py-1 text-[10px] font-black text-white rounded border border-white/10 shadow-lg uppercase tracking-wider ${getBadgeColor(movie.contentRating)}`}>
-                        {movie.contentRating}
-                    </span>
-                )}
-            </div>
-
-            {/* Hover Content - Trailer Preview Placeholder */}
+        <Link href={`/movies/${movie.id}`}>
             <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: isHovered ? 1 : 0 }}
-                className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none"
+                style={{
+                    rotateX,
+                    rotateY,
+                    transformStyle: "preserve-3d",
+                }}
+                onMouseMove={handleMouseMove}
+                onMouseEnter={() => setIsHovered(true)}
+                onMouseLeave={handleMouseLeave}
+                className="relative w-full aspect-[2/3] rounded-xl bg-cinema-gray shadow-xl cursor-pointer group perspective-1000"
             >
-                <div className="w-16 h-16 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center border border-white/30 shadow-lg group-hover:scale-110 transition-transform">
-                    <Play className="w-8 h-8 text-white fill-white ml-1" />
+                {/* Poster Image */}
+                <div className="absolute inset-0 rounded-xl overflow-hidden bg-cinema-gray">
+                    <img
+                        src={movie.poster}
+                        alt=""
+                        className="absolute inset-0 w-full h-full object-cover blur-xl opacity-30 scale-125"
+                    />
+                    <img
+                        src={movie.poster}
+                        alt={movie.title}
+                        className="absolute inset-0 z-10 w-full h-full object-contain"
+                    />
+                    {/* Gradient Overlay */}
+                    <div className={`absolute inset-0 z-20 bg-gradient-to-t from-black via-black/20 to-transparent transition-opacity duration-300 ${isHovered ? 'opacity-90' : 'opacity-60'}`} />
+                </div>
+
+                {/* Format Badge */}
+                <div className="absolute top-4 right-4 z-20 flex flex-col gap-2 items-end">
+                    <span className="px-2 py-1 text-xs font-bold text-black bg-gold-500 rounded shadow-lg shadow-gold-500/20">
+                        {movie.format}
+                    </span>
+                    {movie.contentRating && (
+                        <span className={`px-2 py-1 text-[10px] font-black text-white rounded border border-white/10 shadow-lg uppercase tracking-wider ${getBadgeColor(movie.contentRating)}`}>
+                            {movie.contentRating}
+                        </span>
+                    )}
+                </div>
+
+                {/* Hover Content - Trailer Preview Placeholder */}
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: isHovered ? 1 : 0 }}
+                    className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none"
+                >
+                    <div className="w-16 h-16 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center border border-white/30 shadow-lg group-hover:scale-110 transition-transform">
+                        <Play className="w-8 h-8 text-white fill-white ml-1" />
+                    </div>
+                </motion.div>
+
+                {/* Info Content */}
+                <div className="absolute bottom-0 left-0 w-full p-6 transform translate-z-20">
+                    <h3 className="text-xl font-bold text-white mb-2 line-clamp-1 group-hover:text-gold-400 transition-colors">
+                        {movie.title}
+                    </h3>
+
+                    <div className="flex items-center gap-4 text-xs text-gray-300 mb-3">
+                        <div className="flex items-center gap-1">
+                            <Star className="w-3 h-3 text-gold-500 fill-gold-500" />
+                            <span>{movie.rating}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                            <Clock className="w-3 h-3" />
+                            <span>{movie.duration}</span>
+                        </div>
+                        <div className="flex gap-1 flex-wrap">
+                            {movie.genre.map(g => (
+                                <span key={g} className="px-2 py-0.5 border border-white/20 rounded-full text-[10px] uppercase bg-black/40 backdrop-blur-sm">
+                                    {g}
+                                </span>
+                            ))}
+                        </div>
+                    </div>
+
+                    <motion.button
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{
+                            height: isHovered || isMobile ? 'auto' : 0,
+                            opacity: isHovered || isMobile ? 1 : 0
+                        }}
+                        className="w-full bg-gold-600 text-black font-bold py-2 rounded-lg text-sm mt-2 overflow-hidden md:mt-2"
+                    >
+                        Book Now
+                    </motion.button>
                 </div>
             </motion.div>
-
-            {/* Info Content */}
-            <div className="absolute bottom-0 left-0 w-full p-6 transform translate-z-20">
-                <h3 className="text-xl font-bold text-white mb-2 line-clamp-1 group-hover:text-gold-400 transition-colors">
-                    {movie.title}
-                </h3>
-
-                <div className="flex items-center gap-4 text-xs text-gray-300 mb-3">
-                    <div className="flex items-center gap-1">
-                        <Star className="w-3 h-3 text-gold-500 fill-gold-500" />
-                        <span>{movie.rating}</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                        <Clock className="w-3 h-3" />
-                        <span>{movie.duration}</span>
-                    </div>
-                    <span className="px-2 py-0.5 border border-white/20 rounded-full text-[10px] uppercase">
-                        {movie.genre}
-                    </span>
-                </div>
-
-                <motion.button
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: isHovered ? 'auto' : 0, opacity: isHovered ? 1 : 0 }}
-                    className="w-full bg-gold-600 text-black font-bold py-2 rounded-lg text-sm mt-2 overflow-hidden"
-                >
-                    Book Now
-                </motion.button>
-            </div>
-        </motion.div>
+        </Link>
     );
 }

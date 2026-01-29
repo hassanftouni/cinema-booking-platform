@@ -60,6 +60,13 @@ export default function SeatSelectionPage({ params }: { params: Promise<{ showti
     const handleBooking = async () => {
         if (selectedSeats.length === 0) return;
 
+        const userStr = localStorage.getItem('user');
+        const user = userStr ? JSON.parse(userStr) : null;
+        if (user && !user.email_verified_at) {
+            alert("Please verify your email before booking a ticket.");
+            return;
+        }
+
         setIsSubmitting(true);
         try {
             await fetchAPI('/bookings', {
@@ -89,9 +96,19 @@ export default function SeatSelectionPage({ params }: { params: Promise<{ showti
         <main className="min-h-screen bg-cinema-black text-white flex flex-col">
             <Navbar />
 
-            <div className="flex-1 flex flex-col lg:flex-row pt-24 h-full relative overflow-hidden">
+            <div className="flex-1 flex flex-col lg:flex-row pt-32 h-full relative overflow-hidden">
+                {/* Cinematic Background Backdrop */}
+                <div className="absolute inset-0 z-0 opacity-20">
+                    <img
+                        src={showtime?.movie?.background_image_url || showtime?.movie?.poster_url}
+                        alt=""
+                        className="w-full h-full object-cover blur-3xl scale-110"
+                    />
+                    <div className="absolute inset-0 bg-cinema-black/60" />
+                </div>
+
                 {/* Ambient Background Glow */}
-                <div className="absolute top-1/2 left-1/4 w-[500px] h-[500px] bg-gold-500/5 blur-[150px] rounded-full pointer-events-none" />
+                <div className="absolute top-1/2 left-1/4 w-[500px] h-[500px] bg-gold-500/5 blur-[150px] rounded-full pointer-events-none z-0" />
 
                 {/* Left: Seat Map */}
                 <div className="flex-1 p-8 overflow-hidden relative flex flex-col items-center justify-center">

@@ -2,9 +2,9 @@
 
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
-import { motion, useScroll, useMotionValueEvent } from 'framer-motion';
+import { motion, useScroll, useMotionValueEvent, AnimatePresence } from 'framer-motion';
 import { usePathname } from 'next/navigation';
-import { Search, User, Menu, Ticket, Bell } from 'lucide-react';
+import { User, Menu, Ticket, Bell } from 'lucide-react';
 import { fetchAPI } from '../../lib/api/client';
 import { getEcho } from '../../lib/echo';
 
@@ -25,9 +25,12 @@ export default function Navbar() {
     });
 
     const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const [isVerified, setIsVerified] = useState(true);
     const [userName, setUserName] = useState<string | null>(null);
     const [isAdmin, setIsAdmin] = useState(false);
     const [unreadInquiries, setUnreadInquiries] = useState(0);
+    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+    const [isResending, setIsResending] = useState(false);
 
     const handleLogout = () => {
         localStorage.removeItem('token');
@@ -60,6 +63,7 @@ export default function Navbar() {
                 try {
                     const user = JSON.parse(userStr);
                     setUserName(user.name);
+                    setIsVerified(!!user.email_verified_at);
                     checkAdmin(user);
                 } catch (e) { }
             }
@@ -68,6 +72,7 @@ export default function Navbar() {
                 .then(user => {
                     localStorage.setItem('user', JSON.stringify(user));
                     setUserName(user.name);
+                    setIsVerified(!!user.email_verified_at);
                     checkAdmin(user);
 
                     if (user.is_admin || user.email === 'hassan.ftounne@gmail.com') {
@@ -101,6 +106,18 @@ export default function Navbar() {
         };
     }, [pathname]);
 
+    const handleResendVerification = async () => {
+        setIsResending(true);
+        try {
+            await fetchAPI('/email/resend', { method: 'POST' });
+            alert('Verification email sent! Please check your inbox.');
+        } catch (error: any) {
+            alert(error.message || 'Failed to resend verification email.');
+        } finally {
+            setIsResending(false);
+        }
+    };
+
     return (
         <motion.nav
             variants={{
@@ -115,13 +132,33 @@ export default function Navbar() {
                 }`}
         >
             <div className={`${scrolled ? 'py-4' : 'py-6'} transition-all duration-500`}>
+                {isLoggedIn && !isVerified && (
+                    <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        className="bg-red-500/20 border-b border-red-500/30 py-2"
+                    >
+                        <div className="container mx-auto px-6 flex items-center justify-between gap-4">
+                            <p className="text-[10px] md:text-xs font-medium text-red-200">
+                                Your email address is not verified. Please check your inbox or click to resend.
+                            </p>
+                            <button
+                                onClick={handleResendVerification}
+                                disabled={isResending}
+                                className="text-[10px] md:text-xs font-bold text-white bg-red-600 hover:bg-red-500 px-3 py-1 rounded transition-colors whitespace-nowrap"
+                            >
+                                {isResending ? 'Sending...' : 'Resend Email'}
+                            </button>
+                        </div>
+                    </motion.div>
+                )}
                 {userName && (
                     <div className="py-1.5 mb-2">
                         <div className="container mx-auto px-6">
                             <motion.p
                                 initial={{ opacity: 0, y: -10 }}
                                 animate={{ opacity: 1, y: 0 }}
-                                className="text-[10px] font-black text-gold-500/80 uppercase tracking-[0.4em] text-center md:text-left"
+                                className="text-[9px] md:text-[10px] font-black text-gold-500/80 uppercase tracking-[0.2em] md:tracking-[0.4em] text-center md:text-left truncate"
                             >
                                 Hi, <span className="text-white">{userName}</span> — Welcome Back
                             </motion.p>
@@ -133,7 +170,7 @@ export default function Navbar() {
                         <div className="w-10 h-10 border-2 border-gold-500 rounded-full flex items-center justify-center border-dashed group-hover:rotate-180 transition-transform duration-700">
                             <Ticket className="w-5 h-5 text-gold-500" />
                         </div>
-                        <span className="text-2xl font-serif font-bold text-white tracking-wide">
+                        <span className="text-sm sm:text-lg md:text-2xl font-serif font-bold text-white tracking-wide">
                             BEIRUT SOUKS <span className="text-gold-gradient">CINEMACITY</span>
                         </span>
                     </Link>
@@ -163,9 +200,6 @@ export default function Navbar() {
                     </div>
 
                     <div className="flex items-center gap-6">
-                        <button className="text-white hover:text-gold-500 transition-colors">
-                            <Search className="w-5 h-5" />
-                        </button>
 
                         {isLoggedIn ? (
                             <div className="hidden md:flex items-center gap-4">
@@ -197,16 +231,65 @@ export default function Navbar() {
                             </Link>
                         )}
 
-                        <button className="md:hidden text-white">
+                        <button
+                            className="md:hidden text-white z-50 relative"
+                            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                        >
                             <Menu className="w-6 h-6" />
                         </button>
-
-                        {isLoggedIn && (
-                            <div className="md:hidden flex items-center gap-2">
-                                {isAdmin && <Link href="/admin/movies" className="text-xs text-gold-500 border border-gold-500/30 px-2 py-1 rounded">Admin</Link>}
-                            </div>
-                        )}
                     </div>
+
+                    {/* Mobile Menu Overlay */}
+                    <AnimatePresence>
+                        {mobileMenuOpen && (
+                            <motion.div
+                                initial={{ opacity: 0, x: '100%' }}
+                                animate={{ opacity: 1, x: 0 }}
+                                exit={{ opacity: 0, x: '100%' }}
+                                transition={{ type: "spring", damping: 25, stiffness: 200 }}
+                                className="fixed inset-0 bg-neutral-950 z-40 flex flex-col items-center justify-center space-y-8 md:hidden"
+                            >
+                                {['Movies', 'Cinemas', 'Experiences', 'Offers', 'Contact'].map((item) => (
+                                    <Link
+                                        key={item}
+                                        href={item === 'Contact' ? '/contact' : `/${item.toLowerCase()}`}
+                                        className="text-2xl font-bold uppercase tracking-widest text-white hover:text-gold-500 transition-colors"
+                                        onClick={() => setMobileMenuOpen(false)}
+                                    >
+                                        {item}
+                                    </Link>
+                                ))}
+
+                                {isLoggedIn ? (
+                                    <div className="flex flex-col items-center gap-6 mt-8">
+                                        {isAdmin && (
+                                            <>
+                                                <Link href="/admin/movies" onClick={() => setMobileMenuOpen(false)} className="text-lg text-gray-300">Admin Dashboard</Link>
+                                                <Link href="/admin/contacts" onClick={() => setMobileMenuOpen(false)} className="text-lg text-gray-300">Inquiries</Link>
+                                            </>
+                                        )}
+                                        <button
+                                            onClick={() => {
+                                                handleLogout();
+                                                setMobileMenuOpen(false);
+                                            }}
+                                            className="text-red-500 text-lg font-medium"
+                                        >
+                                            Logout
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <Link
+                                        href="/login"
+                                        onClick={() => setMobileMenuOpen(false)}
+                                        className="text-gold-500 text-lg font-medium border border-gold-500/50 px-8 py-3 rounded-full mt-4"
+                                    >
+                                        Sign In
+                                    </Link>
+                                )}
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
                 </div>
             </div>
         </motion.nav>

@@ -48,20 +48,16 @@ export default function Home() {
       <Navbar />
 
 
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 1 }}
-      >
+      <div className="relative z-0">
         <HeroSlider movies={nowShowing} />
-      </motion.div>
+      </div>
 
       {nowShowing.length > 0 && (
         <motion.section
           initial={{ opacity: 0, y: 50 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-100px" }}
-          transition={{ duration: 1, ease: "easeOut", delay: 0.2 }}
+          transition={{ duration: 0.8, ease: "easeOut", delay: 0 }}
           className="pt-24" // Extra padding to separate from hero if needed
         >
           <MovieCarousel movies={nowShowing} title="Now Selling" />
@@ -73,7 +69,7 @@ export default function Home() {
           initial={{ opacity: 0, y: 50 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-100px" }}
-          transition={{ duration: 1, ease: "easeOut", delay: 0.4 }}
+          transition={{ duration: 0.8, ease: "easeOut", delay: 0.1 }}
           className="mt-[-80px]" // Subtle overlap for cinematic feel
         >
           <MovieCarousel movies={comingSoon} title="Upcoming Soon" />

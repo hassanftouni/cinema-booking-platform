@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { fetchAPI } from '../../../../lib/api/client';
+import { fetchAPI, Hall, Showtime } from '../../../../lib/api/client';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Save, Upload, X } from 'lucide-react';
 import Link from 'next/link';
@@ -17,6 +17,7 @@ export default function CreateMoviePage() {
         title: '',
         description: '',
         poster_url: '',
+        background_image_url: '',
         trailer_url: '',
         duration_minutes: '',
         rating: '',
@@ -25,27 +26,57 @@ export default function CreateMoviePage() {
         director: '',
         writers: '',
         status: 'now_showing',
-        content_rating: ''
+        content_rating: '',
+        tagline: '' // Used for Experience Category
     });
-
-    const [genreInput, setGenreInput] = useState('');
-
-    const handleGenreAdd = (e: React.KeyboardEvent) => {
-        if (e.key === 'Enter' && genreInput.trim()) {
-            e.preventDefault();
-            if (!formData.genre.includes(genreInput.trim())) {
-                setFormData(prev => ({ ...prev, genre: [...prev.genre, genreInput.trim()] }));
-            }
-            setGenreInput('');
-        }
-    };
-
-    const handleGenreRemove = (genre: string) => {
-        setFormData(prev => ({ ...prev, genre: prev.genre.filter(g => g !== genre) }));
-    };
 
     const [posterFile, setPosterFile] = useState<File | null>(null);
     const [posterPreview, setPosterPreview] = useState<string | null>(null);
+    const [backgroundFile, setBackgroundFile] = useState<File | null>(null);
+    const [backgroundPreview, setBackgroundPreview] = useState<string | null>(null);
+
+    // Showtime State
+    const [halls, setHalls] = useState<Hall[]>([]);
+    const [showtimes, setShowtimes] = useState<Showtime[]>([]);
+    const [scheduleForm, setScheduleForm] = useState({
+        hall_id: '',
+        date: '',
+        time: '',
+        end_time: ''
+    });
+
+    useEffect(() => {
+        // Fetch Halls
+        const loadHalls = async () => {
+            try {
+                const data = await fetchAPI('/admin/halls');
+                setHalls(data);
+            } catch (error) {
+                console.error("Failed to load halls", error);
+            }
+        };
+        loadHalls();
+    }, []);
+
+    const addShowtime = () => {
+        if (!scheduleForm.hall_id || !scheduleForm.date || !scheduleForm.time || !scheduleForm.end_time) return;
+
+        const start_time = `${scheduleForm.date}T${scheduleForm.time}:00`;
+        const end_time = `${scheduleForm.date}T${scheduleForm.end_time}:00`;
+
+        setShowtimes([...showtimes, {
+            hall_id: scheduleForm.hall_id,
+            start_time,
+            end_time
+        }]);
+
+        // Reset times only for easier multi-entry
+        setScheduleForm(prev => ({ ...prev, time: '', end_time: '' }));
+    };
+
+    const removeShowtime = (index: number) => {
+        setShowtimes(showtimes.filter((_, i) => i !== index));
+    };
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -61,9 +92,6 @@ export default function CreateMoviePage() {
         setError('');
 
         const finalGenres = [...formData.genre];
-        if (genreInput.trim() && !finalGenres.includes(genreInput.trim())) {
-            finalGenres.push(genreInput.trim());
-        }
 
         const data = new FormData();
         data.append('title', formData.title);
@@ -76,12 +104,25 @@ export default function CreateMoviePage() {
         if (formData.writers) data.append('writers', formData.writers);
         if (formData.trailer_url) data.append('trailer_url', formData.trailer_url);
         data.append('content_rating', formData.content_rating);
+        if (formData.tagline) data.append('tagline', formData.tagline); // Experience Category
+
+        showtimes.forEach((st, index) => {
+            data.append(`showtimes[${index}][hall_id]`, st.hall_id);
+            data.append(`showtimes[${index}][start_time]`, st.start_time);
+            if (st.end_time) data.append(`showtimes[${index}][end_time]`, st.end_time);
+        });
 
         finalGenres.forEach(g => data.append('genre[]', g));
         if (posterFile) {
             data.append('poster', posterFile);
         } else if (formData.poster_url) {
             data.append('poster_url', formData.poster_url);
+        }
+
+        if (backgroundFile) {
+            data.append('background_image', backgroundFile);
+        } else if (formData.background_image_url) {
+            data.append('background_image_url', formData.background_image_url);
         }
 
         try {
@@ -176,12 +217,23 @@ export default function CreateMoviePage() {
                         <div className="space-y-2">
                             <label className="text-sm font-medium text-gray-300">Movie Poster</label>
                             <div className="flex flex-col gap-4">
-                                {posterPreview ? (
+                                {(posterPreview || formData.poster_url) ? (
                                     <div className="relative w-32 h-48 rounded-lg overflow-hidden border border-white/20">
-                                        <img src={posterPreview} className="w-full h-full object-cover" />
+                                        <img
+                                            src={posterPreview || formData.poster_url}
+                                            alt="Poster preview"
+                                            className="w-full h-full object-cover"
+                                            onError={(e) => {
+                                                e.currentTarget.src = 'https://via.placeholder.com/300x450?text=Invalid+Image';
+                                            }}
+                                        />
                                         <button
                                             type="button"
-                                            onClick={() => { setPosterFile(null); setPosterPreview(null); }}
+                                            onClick={() => {
+                                                setPosterFile(null);
+                                                setPosterPreview(null);
+                                                setFormData({ ...formData, poster_url: '' });
+                                            }}
                                             className="absolute top-1 right-1 bg-black/50 p-1 rounded-full hover:bg-black"
                                         >
                                             <X className="w-4 h-4" />
@@ -191,14 +243,33 @@ export default function CreateMoviePage() {
                                     <label className="w-full h-48 border-2 border-dashed border-white/10 rounded-xl flex flex-col items-center justify-center cursor-pointer hover:border-gold-500/50 hover:bg-white/5 transition-all">
                                         <Upload className="w-8 h-8 text-gray-500 mb-2" />
                                         <span className="text-sm text-gray-400">Upload Poster Image</span>
-                                        <input type="file" className="hidden" accept="image/*" onChange={handleFileChange} />
+                                        <input
+                                            type="file"
+                                            className="hidden"
+                                            accept="image/*"
+                                            onChange={(e) => {
+                                                const file = e.target.files?.[0];
+                                                if (file) {
+                                                    setPosterFile(file);
+                                                    setPosterPreview(URL.createObjectURL(file));
+                                                    setFormData({ ...formData, poster_url: '' }); // Clear URL when file is uploaded
+                                                }
+                                            }}
+                                        />
                                     </label>
                                 )}
                                 <div className="text-xs text-gray-500 text-center">OR</div>
                                 <input
                                     type="url"
                                     value={formData.poster_url}
-                                    onChange={e => setFormData({ ...formData, poster_url: e.target.value })}
+                                    onChange={e => {
+                                        setFormData({ ...formData, poster_url: e.target.value });
+                                        // Clear file upload when URL is entered
+                                        if (e.target.value) {
+                                            setPosterFile(null);
+                                            setPosterPreview(null);
+                                        }
+                                    }}
                                     placeholder="Paste Image URL instead..."
                                     className="w-full bg-black/30 border border-white/10 rounded-lg p-3 focus:border-gold-500 outline-none"
                                 />
@@ -214,6 +285,67 @@ export default function CreateMoviePage() {
                                 placeholder="https://..."
                                 className="w-full bg-black/30 border border-white/10 rounded-lg p-3 focus:border-gold-500 outline-none"
                             />
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-gray-300">Background Image (Details Page)</label>
+                            <div className="flex flex-col gap-4">
+                                {(backgroundPreview || formData.background_image_url) ? (
+                                    <div className="relative w-full h-32 rounded-lg overflow-hidden border border-white/20">
+                                        <img
+                                            src={backgroundPreview || formData.background_image_url}
+                                            alt="Background preview"
+                                            className="w-full h-full object-cover"
+                                            onError={(e) => {
+                                                e.currentTarget.src = 'https://via.placeholder.com/600x200?text=Invalid+Image';
+                                            }}
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setBackgroundFile(null);
+                                                setBackgroundPreview(null);
+                                                setFormData({ ...formData, background_image_url: '' });
+                                            }}
+                                            className="absolute top-1 right-1 bg-black/50 p-1 rounded-full hover:bg-black"
+                                        >
+                                            <X className="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <label className="w-full h-32 border-2 border-dashed border-white/10 rounded-xl flex flex-col items-center justify-center cursor-pointer hover:border-gold-500/50 hover:bg-white/5 transition-all">
+                                        <Upload className="w-6 h-6 text-gray-500 mb-2" />
+                                        <span className="text-sm text-gray-400">Upload Background Image</span>
+                                        <input
+                                            type="file"
+                                            className="hidden"
+                                            accept="image/*"
+                                            onChange={(e) => {
+                                                const file = e.target.files?.[0];
+                                                if (file) {
+                                                    setBackgroundFile(file);
+                                                    setBackgroundPreview(URL.createObjectURL(file));
+                                                    setFormData({ ...formData, background_image_url: '' });
+                                                }
+                                            }}
+                                        />
+                                    </label>
+                                )}
+                                <div className="text-xs text-gray-500 text-center">OR</div>
+                                <input
+                                    type="url"
+                                    value={formData.background_image_url}
+                                    onChange={e => {
+                                        setFormData({ ...formData, background_image_url: e.target.value });
+                                        if (e.target.value) {
+                                            setBackgroundFile(null);
+                                            setBackgroundPreview(null);
+                                        }
+                                    }}
+                                    placeholder="Paste Background URL instead..."
+                                    className="w-full bg-black/30 border border-white/10 rounded-lg p-3 focus:border-gold-500 outline-none"
+                                />
+                            </div>
                         </div>
 
                         <div className="space-y-2">
@@ -241,22 +373,31 @@ export default function CreateMoviePage() {
                         </div>
 
                         <div className="space-y-2 md:col-span-2">
-                            <label className="text-sm font-medium text-gray-300">Genres (Press Enter to add)</label>
-                            <input
-                                type="text"
-                                value={genreInput}
-                                onChange={e => setGenreInput(e.target.value)}
-                                onKeyDown={handleGenreAdd}
-                                className="w-full bg-black/30 border border-white/10 rounded-lg p-3 focus:border-gold-500 outline-none"
-                                placeholder="Sci-Fi, Action..."
-                            />
-                            <div className="flex flex-wrap gap-2 mt-2">
-                                {formData.genre.map(g => (
-                                    <span key={g} className="px-2 py-1 bg-gold-900/40 text-gold-500 rounded text-sm flex items-center gap-1">
-                                        {g}
-                                        <button type="button" onClick={() => handleGenreRemove(g)} className="hover:text-white"><X className="w-3 h-3" /></button>
-                                    </span>
-                                ))}
+                            <label className="text-sm font-medium text-gray-300">Genres</label>
+                            <div className="flex flex-wrap gap-3">
+                                {['Action', 'Sci-Fi', 'Drama', 'Comedy', 'Horror', 'Family'].map((genre) => {
+                                    const isSelected = formData.genre.includes(genre);
+                                    return (
+                                        <button
+                                            key={genre}
+                                            type="button"
+                                            onClick={() => {
+                                                setFormData(prev => {
+                                                    const newGenres = isSelected
+                                                        ? prev.genre.filter(g => g !== genre)
+                                                        : [...prev.genre, genre];
+                                                    return { ...prev, genre: newGenres };
+                                                });
+                                            }}
+                                            className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${isSelected
+                                                ? 'bg-gold-500 text-black shadow-lg shadow-gold-500/20'
+                                                : 'bg-black/30 text-gray-400 border border-white/10 hover:border-gold-500/50 hover:text-white'
+                                                }`}
+                                        >
+                                            {genre}
+                                        </button>
+                                    );
+                                })}
                             </div>
                         </div>
 
@@ -288,6 +429,113 @@ export default function CreateMoviePage() {
                                 <option value="Couples">Ideal for Couples</option>
                                 <option value="Kids">Kids</option>
                             </select>
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-gray-300">Experience Category</label>
+                            <select
+                                value={formData.tagline} // Storing in tagline
+                                onChange={e => setFormData({ ...formData, tagline: e.target.value })}
+                                className="w-full bg-black/30 border border-white/10 rounded-lg p-3 focus:border-gold-500 outline-none text-white"
+                            >
+                                <option value="">Select Experience</option>
+                                <option value="Master Image 3D">Master Image 3D</option>
+                                <option value="Plus Laser Theater">Plus Laser Theater</option>
+                                <option value="STUDIO15">STUDIO15</option>
+                                <option value="VIP Theatre">VIP Theatre</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    {/* Showtime Scheduler Section */}
+                    <div className="pt-8 border-t border-white/10">
+                        <h2 className="text-xl font-bold text-white mb-4">Showtime Schedule</h2>
+
+                        <div className="grid grid-cols-1 md:grid-cols-6 gap-4 mb-4 items-end bg-black/20 p-4 rounded-xl border border-white/5">
+                            <div className="space-y-1 md:col-span-2">
+                                <label className="text-xs text-gray-400">Select Hall</label>
+                                <select
+                                    value={scheduleForm.hall_id}
+                                    onChange={e => setScheduleForm({ ...scheduleForm, hall_id: e.target.value })}
+                                    className="w-full bg-black/40 border border-white/20 rounded-lg p-2 text-sm focus:border-gold-500 outline-none"
+                                >
+                                    <option value="">Select Hall...</option>
+                                    {halls.map(hall => (
+                                        <option key={hall.id} value={hall.id}>
+                                            {hall.cinema?.name} - {hall.name} ({hall.capacity} seats)
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div className="space-y-1">
+                                <label className="text-xs text-gray-400">Date</label>
+                                <input
+                                    type="date"
+                                    value={scheduleForm.date}
+                                    onChange={e => setScheduleForm({ ...scheduleForm, date: e.target.value })}
+                                    className="w-full bg-black/40 border border-white/20 rounded-lg p-2 text-sm focus:border-gold-500 outline-none"
+                                />
+                            </div>
+                            <div className="space-y-1">
+                                <label className="text-xs text-gray-400">Start Time</label>
+                                <input
+                                    type="time"
+                                    value={scheduleForm.time}
+                                    onChange={e => setScheduleForm({ ...scheduleForm, time: e.target.value })}
+                                    className="w-full bg-black/40 border border-white/20 rounded-lg p-2 text-sm focus:border-gold-500 outline-none"
+                                />
+                            </div>
+                            <div className="space-y-1">
+                                <label className="text-xs text-gray-400">End Time</label>
+                                <input
+                                    type="time"
+                                    value={scheduleForm.end_time}
+                                    onChange={e => setScheduleForm({ ...scheduleForm, end_time: e.target.value })}
+                                    className="w-full bg-black/40 border border-white/20 rounded-lg p-2 text-sm focus:border-gold-500 outline-none"
+                                />
+                            </div>
+                            <button
+                                type="button"
+                                onClick={addShowtime}
+                                className="bg-gold-500 hover:bg-gold-400 text-black font-bold py-2 px-4 rounded-lg text-sm transition-colors"
+                            >
+                                + Add Show
+                            </button>
+                        </div>
+
+                        {/* Scheduled Showtimes List */}
+                        <div className="space-y-2">
+                            {showtimes.length === 0 && <p className="text-gray-500 italic text-sm">No showtimes added yet.</p>}
+                            {showtimes.map((st, i) => {
+                                const hall = halls.find(h => h.id === st.hall_id);
+                                const date = new Date(st.start_time);
+                                return (
+                                    <div key={i} className="flex items-center justify-between bg-white/5 p-3 rounded-lg border border-white/5">
+                                        <div className="flex items-center gap-4">
+                                            <div className="px-3 py-1 bg-white/10 rounded text-xs text-gold-500 font-bold uppercase tracking-wider">
+                                                {hall?.name || 'Unknown Hall'}
+                                            </div>
+                                            <div className="text-sm">
+                                                <span className="text-white font-medium">
+                                                    {date.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                                                </span>
+                                                <span className="mx-2 text-gray-600">|</span>
+                                                <span className="text-gray-300">
+                                                    {date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}
+                                                    {st.end_time && ` - ${new Date(st.end_time).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}`}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => removeShowtime(i)}
+                                            className="text-red-500 hover:text-red-400 p-1"
+                                        >
+                                            <X className="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                );
+                            })}
                         </div>
                     </div>
 

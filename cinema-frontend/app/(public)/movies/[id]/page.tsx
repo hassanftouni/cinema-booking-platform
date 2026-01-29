@@ -51,24 +51,24 @@ export default function MovieDetails({ params }: { params: Promise<{ id: string 
             <Navbar />
 
             {/* Hero Header */}
-            <div className="relative h-[85vh] w-full overflow-hidden">
-                <motion.div style={{ y: y1 }} className="absolute inset-0">
+            <div className="relative min-h-[85vh] w-full overflow-hidden flex flex-col justify-end">
+                <motion.div style={{ y: y1 }} className="absolute inset-0 z-0">
                     <div
                         className="absolute inset-0 bg-cover bg-center"
-                        style={{ backgroundImage: `url(${movie.poster_url})` }}
+                        style={{ backgroundImage: `url(${movie.background_image_url || movie.poster_url})` }}
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-cinema-black via-cinema-black/40 to-transparent" />
                     <div className="absolute inset-0 bg-gradient-to-r from-cinema-black via-transparent to-transparent opacity-80" />
                 </motion.div>
 
-                <div className="absolute inset-0 container mx-auto px-6 flex items-end pb-24">
+                <div className="container mx-auto px-6 relative z-10 pt-48 pb-24">
                     <div className="flex flex-col md:flex-row gap-16 items-end w-full">
                         {/* Poster - Animated Reveal */}
                         <motion.div
                             initial={{ opacity: 0, scale: 0.8, rotateY: 30 }}
                             animate={{ opacity: 1, scale: 1, rotateY: 0 }}
                             transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
-                            className="w-72 h-[450px] rounded-[2.5rem] overflow-hidden shadow-[0_30px_60px_rgba(0,0,0,0.8)] border border-white/10 hidden md:block perspective-1000 origin-bottom hover:scale-[1.02] transition-transform duration-700"
+                            className="w-72 h-[450px] rounded-[3.5rem] overflow-hidden shadow-[0_30px_60px_rgba(0,0,0,0.8)] border border-white/10 hidden md:block perspective-1000 origin-bottom hover:scale-[1.02] transition-transform duration-700"
                         >
                             <img src={movie.poster_url} alt={movie.title} className="w-full h-full object-cover" />
                         </motion.div>
@@ -89,13 +89,37 @@ export default function MovieDetails({ params }: { params: Promise<{ id: string 
                                 <span className="px-5 py-2 bg-gold-600 text-black rounded-full text-[10px] font-black uppercase tracking-[0.2em] shadow-lg shadow-gold-600/20">
                                     {movie.rating} RATING
                                 </span>
+                                {(movie as any).content_rating && (
+                                    <span className={`px-5 py-2 rounded-full text-[10px] font-black uppercase tracking-[0.2em] text-white shadow-lg ${(movie as any).content_rating === '+18' ? 'bg-red-600 shadow-red-600/20' :
+                                        (movie as any).content_rating === '+16' ? 'bg-orange-600 shadow-orange-600/20' :
+                                            (movie as any).content_rating === 'PG-13' ? 'bg-amber-500 shadow-amber-500/20' :
+                                                (movie as any).content_rating === 'Kids' ? 'bg-blue-500 shadow-blue-500/20' :
+                                                    'bg-zinc-600'
+                                        }`}>
+                                        {(movie as any).content_rating}
+                                    </span>
+                                )}
                             </motion.div>
+
+                            {/* Experience Category (Tagline) */}
+                            {(movie as any).tagline && (
+                                <motion.div
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: 0.5 }}
+                                    className="inline-block"
+                                >
+                                    <span className="px-3 py-1 bg-gold-500/10 border border-gold-500/20 text-gold-500 text-xs font-bold uppercase tracking-widest rounded-lg">
+                                        {(movie as any).tagline}
+                                    </span>
+                                </motion.div>
+                            )}
 
                             <motion.h1
                                 initial={{ opacity: 0, y: 30, letterSpacing: "-0.05em" }}
                                 animate={{ opacity: 1, y: 0, letterSpacing: "-0.02em" }}
                                 transition={{ duration: 1, delay: 0.6, ease: [0.22, 1, 0.36, 1] }}
-                                className="text-6xl md:text-[8rem] font-serif font-black text-white leading-[0.85] uppercase"
+                                className="text-4xl sm:text-6xl md:text-[8rem] font-serif font-black text-white leading-[0.85] uppercase"
                             >
                                 {movie.title}
                             </motion.h1>
@@ -231,6 +255,6 @@ export default function MovieDetails({ params }: { params: Promise<{ id: string 
 
             </div>
             <Footer />
-        </main>
+        </main >
     );
 }

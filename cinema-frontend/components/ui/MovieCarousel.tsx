@@ -95,13 +95,28 @@ export default function MovieCarousel({ movies = [], title = "Now Trending" }: {
                                     </div>
                                     <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent opacity-90 group-hover:opacity-100 transition-opacity" />
 
-                                    {movie.content_rating && (
-                                        <div className="absolute top-6 right-6 z-20">
+                                    <div className="absolute top-4 right-4 z-20 flex flex-col items-end gap-2">
+                                        {/* Format/Experience Badge */}
+                                        {movie.tagline && (
+                                            <span className="px-2 py-1 text-[10px] font-black text-black bg-gold-500 rounded shadow-lg shadow-gold-500/20 uppercase tracking-wide">
+                                                {movie.tagline}
+                                            </span>
+                                        )}
+
+                                        {movie.content_rating && (
                                             <span className={`px-3 py-1 text-[10px] font-black text-white rounded-full border border-white/10 shadow-xl uppercase tracking-widest ${getBadgeColor(movie.content_rating)}`}>
                                                 {movie.content_rating}
                                             </span>
+                                        )}
+                                        {/* Genre Badges */}
+                                        <div className="flex flex-wrap gap-1 justify-end max-w-[150px]">
+                                            {movie.genre && movie.genre.map(g => (
+                                                <span key={g} className="px-2 py-0.5 border border-white/20 rounded-full text-[9px] font-bold uppercase bg-black/40 backdrop-blur-md text-gray-200">
+                                                    {g}
+                                                </span>
+                                            ))}
                                         </div>
-                                    )}
+                                    </div>
 
                                     <div className="absolute bottom-0 left-0 p-8 transform translate-y-6 group-hover:translate-y-0 transition-transform duration-500 ease-out">
                                         <div className="w-12 h-1 bg-gold-500 mb-4 scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-500 delay-100" />

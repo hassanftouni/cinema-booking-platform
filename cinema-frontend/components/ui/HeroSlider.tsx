@@ -33,7 +33,20 @@ export default function HeroSlider({ movies = [] }: { movies?: Movie[] }) {
         setIndex(0);
     }, [slides.length]);
 
-    if (slides.length === 0) return null;
+    if (movies.length === 0) {
+        return (
+            <div className="relative h-screen w-full overflow-hidden bg-cinema-black">
+                <div className="absolute inset-0 bg-neutral-900 animate-pulse" />
+                <div className="absolute inset-0 z-10 container mx-auto px-6 flex flex-col justify-center h-full">
+                    <div className="max-w-2xl space-y-6">
+                        <div className="h-4 w-24 bg-white/10 rounded animate-pulse" />
+                        <div className="h-20 w-3/4 bg-white/10 rounded animate-pulse" />
+                        <div className="h-4 w-1/2 bg-white/10 rounded animate-pulse" />
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     const handleAction = (e: React.MouseEvent, href?: string) => {
         const token = localStorage.getItem('token');
@@ -84,7 +97,7 @@ export default function HeroSlider({ movies = [] }: { movies?: Movie[] }) {
             </AnimatePresence>
 
             {/* Content */}
-            <div className="absolute inset-0 z-10 container mx-auto px-6 flex flex-col justify-center h-full">
+            <div className="absolute inset-0 z-10 container mx-auto px-6 flex flex-col justify-center h-full pt-20">
                 <AnimatePresence mode="wait">
                     <motion.div
                         key={`${currentSlide.id}-${index}-text`}
@@ -92,55 +105,44 @@ export default function HeroSlider({ movies = [] }: { movies?: Movie[] }) {
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -50 }}
                         transition={{ duration: 0.8, delay: 0.2 }}
-                        className="max-w-2xl space-y-6"
+                        className="max-w-4xl space-y-6"
                     >
                         <div className="flex items-center gap-3 text-gold-400 font-medium tracking-wider text-sm uppercase">
                             <span className="px-2 py-1 border border-gold-500/30 rounded">IMAX</span>
                             <span>{currentSlide.genre}</span>
                         </div>
 
-                        <h1 className="text-7xl md:text-[9rem] font-serif font-black text-white leading-[0.85] tracking-tighter uppercase whitespace-pre-line">
-                            {currentSlide.title.split(' ').map((word: string, i: number) => (
-                                <span key={i} className="inline-block overflow-hidden mr-4">
-                                    <motion.span
-                                        initial={{ y: "100%" }}
-                                        animate={{ y: 0 }}
-                                        transition={{ duration: 1, ease: [0.22, 1, 0.36, 1], delay: 0.1 * i }}
-                                        className="inline-block"
-                                    >
-                                        {word}
-                                    </motion.span>
-                                </span>
-                            ))}
+                        <h1 className="text-3xl sm:text-5xl md:text-7xl font-serif font-black text-white leading-tight tracking-tighter uppercase">
+                            {currentSlide.title}
                         </h1>
 
-                        <p className="text-lg md:text-xl text-gray-400 font-light max-w-xl leading-relaxed tracking-wide">
+                        <p className="text-base md:text-xl text-gray-400 font-light max-w-xl leading-relaxed tracking-wide line-clamp-3 md:line-clamp-none">
                             {currentSlide.tagline}
                         </p>
 
-                        <div className="flex items-center gap-4 pt-4">
+                        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 pt-4">
                             {currentSlide.trailer_url ? (
                                 <a
                                     href={currentSlide.trailer_url}
                                     onClick={(e) => handleAction(e)}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="px-8 py-4 bg-gold-600 hover:bg-gold-500 text-black font-bold text-lg rounded-full flex items-center gap-2 transition-all hover:scale-105 shadow-lg shadow-gold-600/20"
+                                    className="px-6 py-3 md:px-8 md:py-4 bg-gold-600 hover:bg-gold-500 text-black font-bold text-sm md:text-lg rounded-full flex items-center justify-center gap-2 transition-all hover:scale-105 shadow-lg shadow-gold-600/20"
                                 >
-                                    <Play className="w-5 h-5 fill-current" />
+                                    <Play className="w-4 h-4 md:w-5 md:h-5 fill-current" />
                                     Watch Trailer
                                 </a>
                             ) : (
-                                <button className="px-8 py-4 bg-gold-600/50 cursor-not-allowed text-black font-bold text-lg rounded-full flex items-center gap-2 transition-all">
-                                    <Play className="w-5 h-5 fill-current" />
+                                <button className="px-6 py-3 md:px-8 md:py-4 bg-gold-600/50 cursor-not-allowed text-black font-bold text-sm md:text-lg rounded-full flex items-center justify-center gap-2 transition-all">
+                                    <Play className="w-4 h-4 md:w-5 md:h-5 fill-current" />
                                     No Trailer
                                 </button>
                             )}
                             <button
                                 onClick={(e) => handleAction(e, `/movies/${currentSlide.id}`)}
-                                className="px-8 py-4 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 text-white font-bold text-lg rounded-full flex items-center gap-2 transition-all"
+                                className="px-6 py-3 md:px-8 md:py-4 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 text-white font-bold text-sm md:text-lg rounded-full flex items-center justify-center gap-2 transition-all"
                             >
-                                <Info className="w-5 h-5" />
+                                <Info className="w-4 h-4 md:w-5 md:h-5" />
                                 More Details
                             </button>
                         </div>

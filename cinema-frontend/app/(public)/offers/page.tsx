@@ -36,7 +36,7 @@ export default function OffersPage() {
                         <Sparkles className="w-4 h-4" />
                         Exclusive Deals
                     </div>
-                    <h1 className="text-6xl md:text-8xl font-serif font-bold text-white tracking-tight">
+                    <h1 className="text-4xl sm:text-6xl md:text-8xl font-serif font-bold text-white tracking-tight">
                         Special <span className="text-gold-gradient">Offers</span>
                     </h1>
                     <p className="text-gray-400 text-lg max-w-xl mx-auto font-light leading-relaxed">

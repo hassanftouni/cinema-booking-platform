@@ -15,6 +15,7 @@ class Movie extends Model
         'slug',
         'description',
         'poster_url',
+        'background_image_url',
         'trailer_url',
         'duration_minutes',
         'rating',
@@ -24,6 +25,7 @@ class Movie extends Model
         'writers',
         'status',
         'content_rating',
+        'tagline', // Experience Category
         'tenant_id'
     ];
 

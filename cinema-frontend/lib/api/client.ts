@@ -36,6 +36,7 @@ export interface Movie {
     description?: string;
     tagline?: string;
     backdrop?: string;
+    background_image_url?: string;
     trailer_url?: string;
     director?: string;
     writers?: string;
@@ -56,4 +57,24 @@ export interface Offer {
     expires_at?: string;
     is_active: boolean;
     created_at: string;
+}
+
+export interface Hall {
+    id: string;
+    name: string;
+    cinema_id: string;
+    capacity: number;
+    type: string;
+    cinema?: {
+        id: string;
+        name: string;
+    };
+}
+
+export interface Showtime {
+    id?: string;
+    hall_id: string;
+    start_time: string;
+    end_time?: string;
+    price_matrix?: any;
 }

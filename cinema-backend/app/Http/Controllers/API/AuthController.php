@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use App\Models\User;
+use Illuminate\Auth\Events\Registered;
 use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
@@ -25,11 +26,10 @@ class AuthController extends Controller
             'password' => Hash::make($request->password),
         ]);
 
-        $token = $user->createToken('auth_token')->plainTextToken;
+        event(new Registered($user));
 
         return response()->json([
-            'access_token' => $token,
-            'token_type' => 'Bearer',
+            'message' => 'Registration successful. Please check your email to verify your account.',
             'user' => $user,
         ], 201);
     }
@@ -47,6 +47,12 @@ class AuthController extends Controller
             throw ValidationException::withMessages([
                 'email' => ['Invalid credentials'],
             ]);
+        }
+
+        if (!$user->hasVerifiedEmail()) {
+            return response()->json([
+                'message' => 'Your email address is not verified. Please check your inbox for a verification link.',
+            ], 403);
         }
 
         $token = $user->createToken('auth_token')->plainTextToken;
