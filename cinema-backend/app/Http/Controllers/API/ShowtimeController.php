@@ -29,6 +29,14 @@ class ShowtimeController extends Controller
     {
         $showtime = Showtime::with(['movie', 'hall.cinema', 'hall.seats'])->findOrFail($id);
 
+        // Ensure seats are sorted by Row then Number (numerically) for correct grid rendering
+        if ($showtime->hall && $showtime->hall->seats) {
+            $sortedSeats = $showtime->hall->seats->sortBy(function ($seat) {
+                return $seat->row . str_pad($seat->number, 3, '0', STR_PAD_LEFT);
+            })->values();
+            $showtime->hall->setRelation('seats', $sortedSeats);
+        }
+
         // Get already booked/pending seats for this showtime
         $bookedSeatIds = Ticket::whereHas('booking', function ($query) use ($id) {
             $query->where('showtime_id', $id)

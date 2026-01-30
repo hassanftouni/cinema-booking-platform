@@ -6,6 +6,8 @@ import { motion } from 'framer-motion';
 import { Trash, User, ArrowLeft, Mail, Calendar, Home, Shield, ShieldOff, Check, X, Edit2 } from 'lucide-react';
 import Link from 'next/link';
 
+import { AlertModal, ConfirmModal } from '../../../components/ui/Modal';
+
 interface UserData {
     id: number;
     name: string;
@@ -19,6 +21,19 @@ export default function AdminUsersPage() {
     const [loading, setLoading] = useState(true);
     const [editingId, setEditingId] = useState<number | null>(null);
     const [editForm, setEditForm] = useState({ name: '', email: '' });
+
+    const [alertState, setAlertState] = useState<{ isOpen: boolean; message: string; type: 'success' | 'error' | 'info' }>({
+        isOpen: false,
+        message: '',
+        type: 'info'
+    });
+
+    const [confirmState, setConfirmState] = useState<{ isOpen: boolean; message: string; title: string; onConfirm: () => void }>({
+        isOpen: false,
+        message: '',
+        title: '',
+        onConfirm: () => { }
+    });
 
     useEffect(() => {
         const loadUsers = async () => {
@@ -40,7 +55,11 @@ export default function AdminUsersPage() {
         if (currentUserStr) {
             const currentUser = JSON.parse(currentUserStr);
             if (currentUser.id === user.id && user.is_admin) {
-                alert("You cannot demote yourself!");
+                setAlertState({
+                    isOpen: true,
+                    message: "You cannot demote yourself!",
+                    type: 'error'
+                });
                 return;
             }
         }
@@ -71,20 +90,38 @@ export default function AdminUsersPage() {
             setEditingId(null);
         } catch (error) {
             console.error("Failed to update user", error);
-            alert("Failed to update user. Check if email is already taken.");
+            setAlertState({
+                isOpen: true,
+                message: "Failed to update user. Check if email is already taken.",
+                type: 'error'
+            });
         }
     };
 
     const handleDelete = async (id: number) => {
-        if (!confirm('Are you sure you want to delete this user?')) return;
-
-        try {
-            await fetchAPI(`/admin/users/${id}`, { method: 'DELETE' });
-            setUsers(prev => prev.filter(u => u.id !== id));
-        } catch (error) {
-            console.error("Failed to delete user", error);
-            alert('Failed to delete user');
-        }
+        setConfirmState({
+            isOpen: true,
+            title: 'Delete User',
+            message: 'Are you sure you want to delete this user? This action cannot be undone.',
+            onConfirm: async () => {
+                try {
+                    await fetchAPI(`/admin/users/${id}`, { method: 'DELETE' });
+                    setUsers(prev => prev.filter(u => u.id !== id));
+                    setAlertState({
+                        isOpen: true,
+                        message: "User deleted successfully",
+                        type: 'success'
+                    });
+                } catch (error) {
+                    console.error("Failed to delete user", error);
+                    setAlertState({
+                        isOpen: true,
+                        message: 'Failed to delete user',
+                        type: 'error'
+                    });
+                }
+            }
+        });
     };
 
     return (
@@ -197,6 +234,23 @@ export default function AdminUsersPage() {
                     </div>
                 )}
             </div>
+            {/* Global Modals */}
+            <AlertModal
+                isOpen={alertState.isOpen}
+                onClose={() => setAlertState(prev => ({ ...prev, isOpen: false }))}
+                message={alertState.message}
+                type={alertState.type}
+            />
+
+            <ConfirmModal
+                isOpen={confirmState.isOpen}
+                onClose={() => setConfirmState(prev => ({ ...prev, isOpen: false }))}
+                onConfirm={confirmState.onConfirm}
+                title={confirmState.title}
+                message={confirmState.message}
+                type="danger"
+                confirmText="Delete User"
+            />
         </div>
     );
 }

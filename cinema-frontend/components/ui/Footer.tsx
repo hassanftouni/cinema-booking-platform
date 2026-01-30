@@ -11,9 +11,9 @@ export default function Footer() {
 
                     {/* Brand Section */}
                     <div className="space-y-6">
-                        <Link href="/" className="flex items-center gap-2">
-                            <div className="w-10 h-10 border-2 border-gold-500 rounded-full flex items-center justify-center border-dashed">
-                                <Ticket className="w-5 h-5 text-gold-500" />
+                        <Link href="/" className="flex items-center gap-3">
+                            <div className="w-10 h-10 border-2 border-gold-500/30 rounded-full flex items-center justify-center border-dashed overflow-hidden bg-white/5">
+                                <img src="/logo.png" className="w-7 h-7 object-contain" alt="Cinemacity Logo" />
                             </div>
                             <span className="text-2xl font-serif font-bold text-white tracking-wide">
                                 BEIRUT SOUKS <span className="text-gold-gradient">CINEMACITY</span>

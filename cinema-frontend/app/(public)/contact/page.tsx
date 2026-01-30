@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import Navbar from '../../../components/ui/Navbar';
 import Footer from '../../../components/ui/Footer';
 import { fetchAPI } from '../../../lib/api/client';
+import { AlertModal } from '../../../components/ui/Modal';
 
 export default function ContactPage() {
     const router = useRouter();
@@ -18,7 +19,11 @@ export default function ContactPage() {
         message: ''
     });
     const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
-    const [message, setMessage] = useState('');
+    const [alertState, setAlertState] = useState<{ isOpen: boolean; message: string; type: 'success' | 'error' | 'info' }>({
+        isOpen: false,
+        message: '',
+        type: 'info'
+    });
     const [isLoggedIn, setIsLoggedIn] = useState(false);
 
     useEffect(() => {
@@ -40,12 +45,22 @@ export default function ContactPage() {
                 body: JSON.stringify(formData)
             });
             setStatus('success');
-            setMessage(res.message);
+            setAlertState({
+                isOpen: true,
+                message: res.message || "Thank you for reaching out! We've received your message.",
+                type: 'success'
+            });
             setFormData({ name: '', email: '', phone: '', subject: '', message: '' });
         } catch (error: any) {
             console.error(error);
             setStatus('error');
-            setMessage(error.message || 'Something went wrong. Please try again.');
+            setAlertState({
+                isOpen: true,
+                message: error.message || 'Something went wrong. Please try again.',
+                type: 'error'
+            });
+        } finally {
+            setStatus('idle');
         }
     };
 
@@ -136,24 +151,6 @@ export default function ContactPage() {
                                     Sign In Now
                                 </button>
                             </div>
-                        ) : status === 'success' ? (
-                            <motion.div
-                                initial={{ opacity: 0, scale: 0.9 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                className="h-full flex flex-col items-center justify-center text-center space-y-6 py-20"
-                            >
-                                <div className="w-20 h-20 bg-green-500/20 text-green-500 rounded-full flex items-center justify-center">
-                                    <Send className="w-10 h-10" />
-                                </div>
-                                <h3 className="text-3xl font-serif font-bold text-white">Message Sent!</h3>
-                                <p className="text-gray-400 max-w-xs mx-auto">{message}</p>
-                                <button
-                                    onClick={() => setStatus('idle')}
-                                    className="text-gold-500 hover:underline font-bold uppercase tracking-widest text-sm"
-                                >
-                                    Send another message
-                                </button>
-                            </motion.div>
                         ) : (
                             <form onSubmit={handleSubmit} className="space-y-6">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -216,8 +213,6 @@ export default function ContactPage() {
                                     </div>
                                 </div>
 
-                                {status === 'error' && <p className="text-red-500 text-sm text-center">{message}</p>}
-
                                 <button
                                     disabled={status === 'loading'}
                                     className="w-full py-4 bg-gradient-to-r from-gold-600 to-gold-500 text-black font-bold rounded-xl flex items-center justify-center gap-2 group hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50"
@@ -238,6 +233,13 @@ export default function ContactPage() {
                 </div>
             </section>
 
+            {/* Global Alert Modal */}
+            <AlertModal
+                isOpen={alertState.isOpen}
+                onClose={() => setAlertState(prev => ({ ...prev, isOpen: false }))}
+                message={alertState.message}
+                type={alertState.type}
+            />
             <Footer />
         </main>
     );

@@ -8,6 +8,8 @@ import { useRouter } from 'next/navigation';
 import Navbar from '../../../../../components/ui/Navbar';
 import { fetchAPI } from '../../../../../lib/api/client';
 
+import { AlertModal } from '../../../../../components/ui/Modal';
+
 const SEAT_TYPES = {
     'Standard': { price: 10, color: 'bg-cinema-gray border-white/20', glow: '' },
     'VIP': { price: 15, color: 'bg-gold-900/40 border-gold-500', glow: 'shadow-[0_0_15px_rgba(234,179,8,0.4)]' },
@@ -22,6 +24,13 @@ export default function SeatSelectionPage({ params }: { params: Promise<{ showti
     const [selectedSeats, setSelectedSeats] = useState<string[]>([]);
     const [loading, setLoading] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    // Alert Modal State
+    const [alertState, setAlertState] = useState<{ isOpen: boolean; message: string; type: 'success' | 'error' | 'info'; onClose?: () => void }>({
+        isOpen: false,
+        message: '',
+        type: 'info'
+    });
 
     useEffect(() => {
         const token = localStorage.getItem('token');
@@ -50,7 +59,11 @@ export default function SeatSelectionPage({ params }: { params: Promise<{ showti
             setSelectedSeats(prev => prev.filter(id => id !== seatId));
         } else {
             if (selectedSeats.length >= 10) {
-                alert("You can select up to 10 seats.");
+                setAlertState({
+                    isOpen: true,
+                    message: "You can select up to 10 seats.",
+                    type: 'info'
+                });
                 return;
             }
             setSelectedSeats(prev => [...prev, seatId]);
@@ -60,12 +73,16 @@ export default function SeatSelectionPage({ params }: { params: Promise<{ showti
     const handleBooking = async () => {
         if (selectedSeats.length === 0) return;
 
-        const userStr = localStorage.getItem('user');
-        const user = userStr ? JSON.parse(userStr) : null;
-        if (user && !user.email_verified_at) {
-            alert("Please verify your email before booking a ticket.");
-            return;
-        }
+        // const userStr = localStorage.getItem('user');
+        // const user = userStr ? JSON.parse(userStr) : null;
+        // if (user && !user.email_verified_at) {
+        //     setAlertState({
+        //         isOpen: true,
+        //         message: "Please verify your email before booking a ticket.",
+        //         type: 'error'
+        //     });
+        //     return;
+        // }
 
         setIsSubmitting(true);
         try {
@@ -76,11 +93,20 @@ export default function SeatSelectionPage({ params }: { params: Promise<{ showti
                     seat_ids: selectedSeats
                 })
             });
-            alert("Booking Successful!");
-            router.push('/');
+
+            setAlertState({
+                isOpen: true,
+                message: "Booking Successful! Enjoy your movie.",
+                type: 'success',
+                onClose: () => router.push('/')
+            });
         } catch (error: any) {
             console.error("Booking failed", error);
-            alert(error.message || "Booking failed. Some seats might have been taken.");
+            setAlertState({
+                isOpen: true,
+                message: error.message || "Booking failed. Some seats might have been taken.",
+                type: 'error'
+            });
         } finally {
             setIsSubmitting(false);
         }
@@ -205,7 +231,9 @@ export default function SeatSelectionPage({ params }: { params: Promise<{ showti
                                 <span className="text-[10px] font-black text-gold-500 uppercase tracking-widest">Selected Movie</span>
                                 <h3 className="text-2xl font-serif font-black text-white leading-tight">{showtime.movie?.title}</h3>
                                 <div className="text-gray-400 text-sm font-medium">
-                                    {new Date(showtime.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} • {new Date(showtime.start_time).toLocaleDateString([], { month: 'short', day: 'numeric' })}
+                                    {new Date(showtime.start_time).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true })} - {new Date(showtime.end_time).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true })}
+                                    <span className="mx-2">•</span>
+                                    {new Date(showtime.start_time).toLocaleDateString([], { month: 'short', day: 'numeric' })}
                                 </div>
                             </div>
                         </div>
@@ -269,6 +297,17 @@ export default function SeatSelectionPage({ params }: { params: Promise<{ showti
                 </div>
 
             </div>
+
+            {/* Global Alert Modal */}
+            <AlertModal
+                isOpen={alertState.isOpen}
+                onClose={() => {
+                    setAlertState(prev => ({ ...prev, isOpen: false }));
+                    if (alertState.onClose) alertState.onClose();
+                }}
+                message={alertState.message}
+                type={alertState.type}
+            />
         </main>
     );
 }

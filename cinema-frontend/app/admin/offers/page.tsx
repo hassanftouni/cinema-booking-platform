@@ -9,6 +9,7 @@ import {
     ArrowLeft, Home, Sparkles
 } from 'lucide-react';
 import Link from 'next/link';
+import { AlertModal, ConfirmModal } from '../../../components/ui/Modal';
 
 export default function AdminOffersPage() {
     const [offers, setOffers] = useState<Offer[]>([]);
@@ -18,6 +19,22 @@ export default function AdminOffersPage() {
     const [editingOffer, setEditingOffer] = useState<Partial<Offer> | null>(null);
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    // Alert Modal State
+    const [alertState, setAlertState] = useState<{ isOpen: boolean; message: string; type: 'success' | 'error' | 'info' }>({
+        isOpen: false,
+        message: '',
+        type: 'info'
+    });
+
+    // Confirm Modal State
+    const [confirmState, setConfirmState] = useState<{ isOpen: boolean; message: string; title: string; onConfirm: () => void; type: 'danger' | 'warning' | 'info' }>({
+        isOpen: false,
+        message: '',
+        title: '',
+        onConfirm: () => { },
+        type: 'warning'
+    });
 
     useEffect(() => {
         loadOffers();
@@ -70,20 +87,41 @@ export default function AdminOffersPage() {
             loadOffers();
         } catch (error) {
             console.error(error);
-            alert("Failed to save offer.");
+            setAlertState({
+                isOpen: true,
+                message: "Failed to save offer.",
+                type: 'error'
+            });
         } finally {
             setIsSubmitting(false);
         }
     };
 
     const handleDelete = async (id: string) => {
-        if (!confirm('Are you sure you want to delete this offer?')) return;
-        try {
-            await fetchAPI(`/admin/offers/${id}`, { method: 'DELETE' });
-            loadOffers();
-        } catch (error) {
-            console.error(error);
-        }
+        setConfirmState({
+            isOpen: true,
+            title: 'Delete Offer',
+            message: 'Are you sure you want to delete this offer? This action cannot be undone.',
+            type: 'danger',
+            onConfirm: async () => {
+                try {
+                    await fetchAPI(`/admin/offers/${id}`, { method: 'DELETE' });
+                    setAlertState({
+                        isOpen: true,
+                        message: "Offer deleted successfully",
+                        type: 'success'
+                    });
+                    loadOffers();
+                } catch (error) {
+                    console.error(error);
+                    setAlertState({
+                        isOpen: true,
+                        message: "Failed to delete offer",
+                        type: 'error'
+                    });
+                }
+            }
+        });
     };
 
     const filteredOffers = offers.filter(o =>
@@ -320,6 +358,24 @@ export default function AdminOffersPage() {
                 </AnimatePresence>
 
             </div>
+
+            {/* Global Modals */}
+            <AlertModal
+                isOpen={alertState.isOpen}
+                onClose={() => setAlertState(prev => ({ ...prev, isOpen: false }))}
+                message={alertState.message}
+                type={alertState.type}
+            />
+
+            <ConfirmModal
+                isOpen={confirmState.isOpen}
+                onClose={() => setConfirmState(prev => ({ ...prev, isOpen: false }))}
+                onConfirm={confirmState.onConfirm}
+                title={confirmState.title}
+                message={confirmState.message}
+                type={confirmState.type}
+                confirmText="Delete Offer"
+            />
         </div>
     );
 }

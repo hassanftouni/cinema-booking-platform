@@ -201,7 +201,9 @@ export default function MovieDetails({ params }: { params: Promise<{ id: string 
                                                         <span className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">{show.hall?.cinema?.name}</span>
                                                     </div>
                                                     <div className="text-4xl font-black text-white group-hover:text-gold-500 transition-colors tracking-tighter">
-                                                        {new Date(show.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                        {new Date(show.start_time).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true })}
+                                                        <span className="text-xl text-gray-500 mx-2">-</span>
+                                                        {new Date(show.end_time).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true })}
                                                     </div>
                                                     <div className="flex items-center gap-2 text-[10px] font-bold text-gray-500 uppercase tracking-widest">
                                                         <Clock className="w-3 h-3 text-gold-500" />

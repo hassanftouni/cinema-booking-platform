@@ -8,6 +8,8 @@ import { Mail, Lock, User, ArrowRight, Film, Star } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { fetchAPI } from '../../../lib/api/client';
 
+import { AlertModal } from '../../../components/ui/Modal';
+
 export default function Register() {
     const router = useRouter();
     const [name, setName] = useState('');
@@ -15,17 +17,24 @@ export default function Register() {
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState('');
+    const [alertState, setAlertState] = useState<{ isOpen: boolean; message: string; type: 'success' | 'error' | 'info' }>({
+        isOpen: false,
+        message: '',
+        type: 'info'
+    });
 
     const [isRegistered, setIsRegistered] = useState(false);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setError('');
         setIsLoading(true);
 
         if (password !== confirmPassword) {
-            setError("Passwords do not match");
+            setAlertState({
+                isOpen: true,
+                message: "Passwords do not match. Please try again.",
+                type: 'error'
+            });
             setIsLoading(false);
             return;
         }
@@ -51,7 +60,11 @@ export default function Register() {
             }
         } catch (err: any) {
             console.error(err);
-            setError(err.message || 'Registration failed');
+            setAlertState({
+                isOpen: true,
+                message: err.message || 'Registration failed. Please try again.',
+                type: 'error'
+            });
         } finally {
             setIsLoading(false);
         }
@@ -83,9 +96,18 @@ export default function Register() {
 
                 <div className="z-10 text-center space-y-6 max-w-lg">
                     <motion.div
-                        initial={{ scale: 0.8 }}
-                        animate={{ scale: 1 }}
+                        initial={{ scale: 0.8, y: -20 }}
+                        animate={{ scale: 1, y: 0 }}
                         transition={{ duration: 1, type: "spring" }}
+                        className="w-24 h-24 mx-auto border-2 border-gold-500/30 rounded-full flex items-center justify-center border-dashed mb-8 bg-white/5 backdrop-blur-xl overflow-hidden shadow-2xl shadow-gold-500/20"
+                    >
+                        <img src="/logo.png" className="w-16 h-16 object-contain" alt="BEIRUT SOUKS CINEMACITY" />
+                    </motion.div>
+
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.3 }}
                     >
                         <h1 className="text-5xl font-serif font-bold text-white mb-4">
                             Join the <span className="text-gold-gradient">Elite</span>
@@ -125,15 +147,6 @@ export default function Register() {
                             </div>
 
                             <form onSubmit={handleSubmit} className="space-y-5">
-                                {error && (
-                                    <motion.div
-                                        initial={{ opacity: 0, y: -10 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        className="p-3 bg-red-500/10 border border-red-500/50 rounded-lg text-red-400 text-sm text-center"
-                                    >
-                                        {error}
-                                    </motion.div>
-                                )}
                                 <motion.div variants={fadeInUp} initial="initial" animate="animate">
                                     <label className="block text-sm font-medium text-gold-100/80 mb-2 ml-1">Full Name</label>
                                     <div className="relative group">
@@ -251,6 +264,13 @@ export default function Register() {
                     )}
                 </div>
             </motion.div>
+            {/* Global Alert Modal */}
+            <AlertModal
+                isOpen={alertState.isOpen}
+                onClose={() => setAlertState(prev => ({ ...prev, isOpen: false }))}
+                message={alertState.message}
+                type={alertState.type}
+            />
         </div>
     );
 }

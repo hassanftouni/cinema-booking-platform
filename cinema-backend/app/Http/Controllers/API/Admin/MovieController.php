@@ -115,6 +115,7 @@ class MovieController extends Controller
             'content_rating' => 'nullable|string|max:20',
             'tagline' => 'nullable|string|max:255',
             'showtimes' => 'nullable|array',
+            'showtimes.*.id' => 'nullable|uuid|exists:showtimes,id',
             'showtimes.*.hall_id' => 'required|exists:halls,id',
             'showtimes.*.start_time' => 'required|date',
             'showtimes.*.end_time' => 'nullable|date',
@@ -139,14 +140,25 @@ class MovieController extends Controller
         $movie->update($validated);
 
         // Handle Showtimes Update
+        // Handle Showtimes Update
         if ($request->has('showtimes')) {
-            // Delete existing showtimes NOT in the request (simple replacement strategy for now, or just add new ones?)
-            // A better approach for "Edit" is to replace all showtimes or manage them individually. 
-            // For simplicity in this iteration: Delete all and re-create.
-            $movie->showtimes()->delete();
+            // 1. Identify IDs of showtimes being kept/updated
+            $keptIds = [];
+            foreach ($request->showtimes as $st) {
+                if (isset($st['id'])) {
+                    $keptIds[] = $st['id'];
+                }
+            }
 
+            // 2. Delete showtimes that are NOT in the kept list (this handles removals)
+            // Note: This will fail if deleted showtimes have bookings (integrity constraint).
+            // Frontend generic error handler will catch this, or we can catch and warn.
+            // For now, we allow it to throw, so user knows they can't delete booked shows.
+            $movie->showtimes()->whereNotIn('id', $keptIds)->delete();
+
+            // 3. Upsert showtimes
             foreach ($request->showtimes as $showtimeData) {
-                // Calculate or use provided end_time
+                // Calculate end_time
                 $startTime = \Carbon\Carbon::parse($showtimeData['start_time']);
                 if (isset($showtimeData['end_time'])) {
                     $endTime = \Carbon\Carbon::parse($showtimeData['end_time']);
@@ -154,13 +166,23 @@ class MovieController extends Controller
                     $endTime = $startTime->copy()->addMinutes((int) $movie->duration_minutes);
                 }
 
-                \App\Models\Showtime::create([
+                $attributes = [
                     'movie_id' => $movie->id,
                     'hall_id' => $showtimeData['hall_id'],
                     'start_time' => $startTime,
                     'end_time' => $endTime,
                     'price_matrix' => $showtimeData['price_matrix'] ?? null,
-                ]);
+                ];
+
+                if (isset($showtimeData['id'])) {
+                    // Update existing
+                    \App\Models\Showtime::where('id', $showtimeData['id'])
+                        ->where('movie_id', $movie->id)
+                        ->update($attributes);
+                } else {
+                    // Create new
+                    \App\Models\Showtime::create($attributes);
+                }
             }
         }
 

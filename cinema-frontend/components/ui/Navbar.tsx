@@ -130,11 +130,11 @@ export default function Navbar() {
                     </div>
                 )}
                 <div className="container mx-auto px-6 flex items-center justify-between">
-                    <Link href="/" className="flex items-center gap-2 group">
-                        <div className="w-10 h-10 border-2 border-gold-500 rounded-full flex items-center justify-center border-dashed group-hover:rotate-180 transition-transform duration-700">
-                            <Ticket className="w-5 h-5 text-gold-500" />
+                    <Link href="/" className="flex items-center gap-3 group">
+                        <div className="w-10 h-10 border-2 border-gold-500/30 rounded-full flex items-center justify-center border-dashed group-hover:border-gold-500 transition-colors duration-700 overflow-hidden bg-white/5 backdrop-blur-sm">
+                            <img src="/logo.png" className="w-7 h-7 object-contain group-hover:scale-110 transition-transform duration-700" alt="Cinemacity Logo" />
                         </div>
-                        <span className="text-sm sm:text-lg md:text-2xl font-serif font-bold text-white tracking-wide">
+                        <span className="text-sm sm:text-lg md:text-2xl font-serif font-bold text-white tracking-wide group-hover:text-gold-500 transition-colors">
                             BEIRUT SOUKS <span className="text-gold-gradient">CINEMACITY</span>
                         </span>
                     </Link>
@@ -228,8 +228,12 @@ export default function Navbar() {
                                     <div className="flex flex-col items-center gap-6 mt-8">
                                         {isAdmin && (
                                             <>
-                                                <Link href="/admin/movies" onClick={() => setMobileMenuOpen(false)} className="text-lg text-gray-300">Admin Dashboard</Link>
-                                                <Link href="/admin/contacts" onClick={() => setMobileMenuOpen(false)} className="text-lg text-gray-300">Inquiries</Link>
+                                                <>
+                                                    <Link href="/admin/movies" onClick={() => setMobileMenuOpen(false)} className="text-lg text-gray-300">Manage Movies</Link>
+                                                    <Link href="/admin/cinemas" onClick={() => setMobileMenuOpen(false)} className="text-lg text-gray-300">Manage Cinemas</Link>
+                                                    <Link href="/admin/offers" onClick={() => setMobileMenuOpen(false)} className="text-lg text-gray-300">Manage Offers</Link>
+                                                    <Link href="/admin/contacts" onClick={() => setMobileMenuOpen(false)} className="text-lg text-gray-300">Inquiries</Link>
+                                                </>
                                             </>
                                         )}
                                         <button

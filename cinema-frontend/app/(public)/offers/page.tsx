@@ -7,9 +7,19 @@ import Navbar from '../../../components/ui/Navbar';
 import Footer from '../../../components/ui/Footer';
 import { fetchAPI, Offer } from '../../../lib/api/client';
 
+import { AlertModal } from '../../../components/ui/Modal';
+
 export default function OffersPage() {
     const [offers, setOffers] = useState<Offer[]>([]);
     const [loading, setLoading] = useState(true);
+
+    const [alertState, setAlertState] = useState<{ isOpen: boolean; message: string; type: 'success' | 'error' | 'info' }>({
+        isOpen: false,
+        message: '',
+        type: 'info'
+    });
+    const [vipEmail, setVipEmail] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
         fetchAPI('/offers')
@@ -17,6 +27,44 @@ export default function OffersPage() {
             .catch(err => console.error("Failed to fetch offers", err))
             .finally(() => setLoading(false));
     }, []);
+
+    const handleVipSignup = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!vipEmail) return;
+
+        setIsSubmitting(true);
+        try {
+            // Get user info if available
+            const userStr = localStorage.getItem('user');
+            const user = userStr ? JSON.parse(userStr) : null;
+
+            await fetchAPI('/contact', {
+                method: 'POST',
+                body: JSON.stringify({
+                    name: user ? user.name : "VIP Interest Guest",
+                    email: vipEmail,
+                    subject: "VIP Membership Request",
+                    message: "This user has requested to join the VIP list from the Offers page."
+                })
+            });
+
+            setAlertState({
+                isOpen: true,
+                message: "Perfect! Your request to join the VIP list has been sent to our concierge team.",
+                type: 'success'
+            });
+            setVipEmail('');
+        } catch (error: any) {
+            console.error(error);
+            setAlertState({
+                isOpen: true,
+                message: error.message || "Something went wrong. Please try again.",
+                type: 'error'
+            });
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
 
     return (
         <main className="min-h-screen bg-cinema-black text-white selection:bg-gold-500 selection:text-black">
@@ -110,7 +158,11 @@ export default function OffersPage() {
                                             <button
                                                 onClick={() => {
                                                     navigator.clipboard.writeText(offer.discount_code!);
-                                                    alert('Code copied!');
+                                                    setAlertState({
+                                                        isOpen: true,
+                                                        message: 'Discount code copied to clipboard!',
+                                                        type: 'success'
+                                                    });
                                                 }}
                                                 className="text-gold-500 hover:text-white transition-colors text-xs font-bold uppercase"
                                             >
@@ -147,20 +199,33 @@ export default function OffersPage() {
                     <p className="text-black/70 text-lg font-medium max-w-xl relative">
                         Join our VIP list and be the first to know about upcoming screenings, private events, and member-only rewards.
                     </p>
-                    <div className="flex flex-col sm:flex-row gap-4 w-full max-w-md relative">
+                    <form onSubmit={handleVipSignup} className="flex flex-col sm:flex-row gap-4 w-full max-w-md relative">
                         <input
+                            required
                             type="email"
+                            value={vipEmail}
+                            onChange={(e) => setVipEmail(e.target.value)}
                             placeholder="your@email.com"
                             className="flex-1 px-8 py-4 bg-white/20 border-2 border-black/10 rounded-full outline-none placeholder:text-black/40 text-black font-bold"
                         />
-                        <button className="px-10 py-4 bg-black text-white font-black rounded-full hover:scale-105 transition-transform">
-                            JOIN NOW
+                        <button
+                            disabled={isSubmitting}
+                            className="px-10 py-4 bg-black text-white font-black rounded-full hover:scale-105 transition-transform disabled:opacity-50 disabled:hover:scale-100"
+                        >
+                            {isSubmitting ? 'JOINING...' : 'JOIN NOW'}
                         </button>
-                    </div>
+                    </form>
                 </div>
             </section>
 
             <Footer />
+            {/* Global Alert Modal */}
+            <AlertModal
+                isOpen={alertState.isOpen}
+                onClose={() => setAlertState(prev => ({ ...prev, isOpen: false }))}
+                message={alertState.message}
+                type={alertState.type}
+            />
         </main>
     );
 }

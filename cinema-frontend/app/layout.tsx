@@ -18,6 +18,10 @@ const playfair = Playfair_Display({
 export const metadata: Metadata = {
   title: 'Beirut Souks Cinemacity | Premium Experience',
   description: 'Book your tickets for the ultimate cinema experience.',
+  icons: {
+    icon: '/icon.png',
+    apple: '/icon.png',
+  }
 };
 
 export default function RootLayout({

@@ -45,24 +45,38 @@ export default function CreateMoviePage() {
         end_time: ''
     });
 
+    const [hallError, setHallError] = useState('');
+
     useEffect(() => {
         // Fetch Halls
         const loadHalls = async () => {
             try {
                 const data = await fetchAPI('/admin/halls');
-                setHalls(data);
-            } catch (error) {
+                if (Array.isArray(data)) {
+                    setHalls(data);
+                } else {
+                    console.error("Halls API returned unexpected format:", data);
+                    setHallError('Failed to load halls: Invalid response format');
+                }
+            } catch (error: any) {
                 console.error("Failed to load halls", error);
+                setHallError(error.message || 'Failed to load cinema halls');
             }
         };
         loadHalls();
     }, []);
 
     const addShowtime = () => {
-        if (!scheduleForm.hall_id || !scheduleForm.date || !scheduleForm.time || !scheduleForm.end_time) return;
+        if (!scheduleForm.hall_id || !scheduleForm.date || !scheduleForm.time || !scheduleForm.end_time) {
+            setError('Please fill in all showtime fields (Hall, Date, Start Time, and End Time) before adding.');
+            return;
+        }
 
         const start_time = `${scheduleForm.date}T${scheduleForm.time}:00`;
         const end_time = `${scheduleForm.date}T${scheduleForm.end_time}:00`;
+
+        // Clear any previous error if showtime is valid
+        setError('');
 
         setShowtimes([...showtimes, {
             hall_id: scheduleForm.hall_id,
@@ -73,6 +87,34 @@ export default function CreateMoviePage() {
         // Reset times only for easier multi-entry
         setScheduleForm(prev => ({ ...prev, time: '', end_time: '' }));
     };
+
+    // Auto-calculate end time when start time changes
+    useEffect(() => {
+        if (scheduleForm.time && formData.duration_minutes) {
+            try {
+                const [hours, minutes] = scheduleForm.time.split(':').map(Number);
+                const duration = parseInt(formData.duration_minutes);
+
+                if (!isNaN(hours) && !isNaN(minutes) && !isNaN(duration)) {
+                    const date = new Date();
+                    date.setHours(hours, minutes, 0);
+
+                    // Add duration + 15 mins buffer
+                    date.setMinutes(date.getMinutes() + duration + 15);
+
+                    const endHours = String(date.getHours()).padStart(2, '0');
+                    const endMinutes = String(date.getMinutes()).padStart(2, '0');
+
+                    setScheduleForm(prev => ({
+                        ...prev,
+                        end_time: `${endHours}:${endMinutes}`
+                    }));
+                }
+            } catch (err) {
+                console.error("Failed to calculate end time", err);
+            }
+        }
+    }, [scheduleForm.time, formData.duration_minutes]);
 
     const removeShowtime = (index: number) => {
         setShowtimes(showtimes.filter((_, i) => i !== index));
@@ -454,18 +496,22 @@ export default function CreateMoviePage() {
                         <div className="grid grid-cols-1 md:grid-cols-6 gap-4 mb-4 items-end bg-black/20 p-4 rounded-xl border border-white/5">
                             <div className="space-y-1 md:col-span-2">
                                 <label className="text-xs text-gray-400">Select Hall</label>
-                                <select
-                                    value={scheduleForm.hall_id}
-                                    onChange={e => setScheduleForm({ ...scheduleForm, hall_id: e.target.value })}
-                                    className="w-full bg-black/40 border border-white/20 rounded-lg p-2 text-sm focus:border-gold-500 outline-none"
-                                >
-                                    <option value="">Select Hall...</option>
-                                    {halls.map(hall => (
-                                        <option key={hall.id} value={hall.id}>
-                                            {hall.cinema?.name} - {hall.name} ({hall.capacity} seats)
-                                        </option>
-                                    ))}
-                                </select>
+                                {hallError ? (
+                                    <div className="text-red-500 text-xs p-2 bg-red-900/20 border border-red-500/50 rounded">{hallError}</div>
+                                ) : (
+                                    <select
+                                        value={scheduleForm.hall_id}
+                                        onChange={e => setScheduleForm({ ...scheduleForm, hall_id: e.target.value })}
+                                        className="w-full bg-black/40 border border-white/20 rounded-lg p-2 text-sm focus:border-gold-500 outline-none"
+                                    >
+                                        <option value="">Select Hall...</option>
+                                        {halls.map(hall => (
+                                            <option key={hall.id} value={hall.id}>
+                                                {hall.cinema?.name} - {hall.name} ({hall.capacity} seats)
+                                            </option>
+                                        ))}
+                                    </select>
+                                )}
                             </div>
                             <div className="space-y-1">
                                 <label className="text-xs text-gray-400">Date</label>

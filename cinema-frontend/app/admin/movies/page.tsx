@@ -3,13 +3,14 @@
 import { useState, useEffect } from 'react';
 import { fetchAPI, Movie } from '../../../lib/api/client';
 import { motion } from 'framer-motion';
-import { Plus, Edit, Trash, CheckCircle, User, Home } from 'lucide-react';
+import { Plus, Edit, Trash, CheckCircle, User, Home, MapPin } from 'lucide-react';
 import Link from 'next/link';
 import { AlertModal, ConfirmModal } from '../../../components/ui/Modal';
 
 export default function AdminMoviesPage() {
     const [movies, setMovies] = useState<Movie[]>([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
     const [alertModal, setAlertModal] = useState({ isOpen: false, message: '', type: 'info' as 'success' | 'error' | 'info' });
     const [confirmModal, setConfirmModal] = useState({ isOpen: false, movieId: '' });
     const [activeFilter, setActiveFilter] = useState<'all' | 'now_showing' | 'coming_soon'>('all');
@@ -19,8 +20,9 @@ export default function AdminMoviesPage() {
             try {
                 const data = await fetchAPI('/admin/movies');
                 setMovies(data.data || []);
-            } catch (error) {
+            } catch (error: any) {
                 console.error("Failed to fetch movies", error);
+                setError(error.message || 'Failed to load movies. Is the backend running?');
             } finally {
                 setLoading(false);
             }
@@ -68,6 +70,13 @@ export default function AdminMoviesPage() {
                         <h1 className="text-2xl md:text-3xl font-bold font-serif text-gold-500">Movie Management</h1>
                     </div>
                     <div className="flex flex-wrap gap-3">
+                        <Link href="/admin/cinemas">
+                            <button className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white font-bold px-4 md:px-6 py-2 md:py-3 rounded-lg transition-transform hover:scale-105 text-sm md:text-base">
+                                <MapPin className="w-4 h-4 md:w-5 md:h-5" />
+                                <span className="hidden sm:inline">Manage Cinemas</span>
+                                <span className="sm:hidden">Cinemas</span>
+                            </button>
+                        </Link>
                         <Link href="/admin/bookings">
                             <button className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white font-bold px-4 md:px-6 py-2 md:py-3 rounded-lg transition-transform hover:scale-105 text-sm md:text-base">
                                 <User className="w-4 h-4 md:w-5 md:h-5" />
@@ -96,8 +105,8 @@ export default function AdminMoviesPage() {
                     <button
                         onClick={() => setActiveFilter('all')}
                         className={`px-6 py-3 rounded-lg font-bold transition-all whitespace-nowrap ${activeFilter === 'all'
-                                ? 'bg-gold-600 text-black'
-                                : 'bg-white/10 text-white hover:bg-white/20'
+                            ? 'bg-gold-600 text-black'
+                            : 'bg-white/10 text-white hover:bg-white/20'
                             }`}
                     >
                         All Movies ({filterCounts.all})
@@ -105,8 +114,8 @@ export default function AdminMoviesPage() {
                     <button
                         onClick={() => setActiveFilter('now_showing')}
                         className={`px-6 py-3 rounded-lg font-bold transition-all whitespace-nowrap ${activeFilter === 'now_showing'
-                                ? 'bg-gold-600 text-black'
-                                : 'bg-white/10 text-white hover:bg-white/20'
+                            ? 'bg-gold-600 text-black'
+                            : 'bg-white/10 text-white hover:bg-white/20'
                             }`}
                     >
                         Now Selling ({filterCounts.now_showing})
@@ -114,8 +123,8 @@ export default function AdminMoviesPage() {
                     <button
                         onClick={() => setActiveFilter('coming_soon')}
                         className={`px-6 py-3 rounded-lg font-bold transition-all whitespace-nowrap ${activeFilter === 'coming_soon'
-                                ? 'bg-gold-600 text-black'
-                                : 'bg-white/10 text-white hover:bg-white/20'
+                            ? 'bg-gold-600 text-black'
+                            : 'bg-white/10 text-white hover:bg-white/20'
                             }`}
                     >
                         Coming Soon ({filterCounts.coming_soon})
@@ -125,6 +134,14 @@ export default function AdminMoviesPage() {
                 {loading ? (
                     <div className="text-center py-20">
                         <div className="text-xl">Loading movies...</div>
+                    </div>
+                ) : error ? (
+                    <div className="text-center py-20">
+                        <div className="bg-red-900/50 p-6 rounded-xl inline-block border border-red-500/50">
+                            <h3 className="text-xl font-bold text-red-200 mb-2">Connection Error</h3>
+                            <p className="text-red-300 mb-4">{error}</p>
+                            <button onClick={() => window.location.reload()} className="px-4 py-2 bg-red-600 hover:bg-red-500 rounded font-bold">Retry</button>
+                        </div>
                     </div>
                 ) : filteredMovies.length === 0 ? (
                     <div className="text-center py-20">
@@ -188,10 +205,10 @@ export default function AdminMoviesPage() {
                                     {movie.content_rating && (
                                         <div className="absolute top-3 right-3">
                                             <span className={`px-2 py-1 rounded text-xs font-bold text-white ${movie.content_rating === '+18' ? 'bg-red-600' :
-                                                    movie.content_rating === '+16' ? 'bg-orange-600' :
-                                                        movie.content_rating === 'PG-13' ? 'bg-amber-500' :
-                                                            movie.content_rating === 'Kids' ? 'bg-blue-500' :
-                                                                'bg-zinc-600'
+                                                movie.content_rating === '+16' ? 'bg-orange-600' :
+                                                    movie.content_rating === 'PG-13' ? 'bg-amber-500' :
+                                                        movie.content_rating === 'Kids' ? 'bg-blue-500' :
+                                                            'bg-zinc-600'
                                                 }`}>
                                                 {movie.content_rating}
                                             </span>

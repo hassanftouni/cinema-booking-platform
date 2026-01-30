@@ -4,21 +4,24 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { Mail, Lock, ArrowRight, Film, Star } from 'lucide-react';
-
 import { useRouter } from 'next/navigation';
 import { fetchAPI } from '../../../lib/api/client';
+import { AlertModal } from '../../../components/ui/Modal';
 
 export default function Login() {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [alertState, setAlertState] = useState<{ isOpen: boolean; message: string; type: 'success' | 'error' | 'info' }>({
+    isOpen: false,
+    message: '',
+    type: 'info'
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    setError('');
 
     try {
       const data = await fetchAPI('/login', {
@@ -33,7 +36,11 @@ export default function Login() {
       router.push('/');
     } catch (err: any) {
       console.error(err);
-      setError('Invalid credentials');
+      setAlertState({
+        isOpen: true,
+        message: 'Invalid credentials. Please check your email and password.',
+        type: 'error'
+      });
     } finally {
       setIsLoading(false);
     }
@@ -65,11 +72,12 @@ export default function Login() {
 
         <div className="z-10 text-center space-y-6 max-w-lg">
           <motion.div
-            animate={{ rotate: 360 }}
-            transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
-            className="w-24 h-24 mx-auto border-2 border-gold-500 rounded-full flex items-center justify-center border-dashed mb-8"
+            initial={{ scale: 0.8, rotate: -10 }}
+            animate={{ scale: 1, rotate: 0 }}
+            transition={{ duration: 0.8, type: "spring" }}
+            className="w-24 h-24 mx-auto border-2 border-gold-500/30 rounded-full flex items-center justify-center border-dashed mb-8 bg-white/5 backdrop-blur-xl overflow-hidden shadow-2xl shadow-gold-500/20"
           >
-            <Film className="w-10 h-10 text-gold-500" />
+            <img src="/logo.png" className="w-16 h-16 object-contain" alt="BEIRUT SOUKS CINEMACITY" />
           </motion.div>
 
           <h1 className="text-5xl font-serif font-bold text-white mb-4">
@@ -109,15 +117,6 @@ export default function Login() {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            {error && (
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="p-3 bg-red-500/10 border border-red-500/50 rounded-lg text-red-400 text-sm text-center"
-              >
-                {error}
-              </motion.div>
-            )}
             <motion.div variants={fadeInUp} initial="initial" animate="animate">
               <label className="block text-sm font-medium text-gold-100/80 mb-2 ml-1">Email Address</label>
               <div className="relative group">
@@ -184,6 +183,14 @@ export default function Login() {
           SECURE SYSTEM v2.0
         </div>
       </motion.div>
+
+      {/* Global Alert Modal */}
+      <AlertModal
+        isOpen={alertState.isOpen}
+        onClose={() => setAlertState(prev => ({ ...prev, isOpen: false }))}
+        message={alertState.message}
+        type={alertState.type}
+      />
     </div>
   );
 }
