@@ -14,7 +14,7 @@ export default function HeroSlider({ movies = [] }: { movies?: Movie[] }) {
         id: m.id,
         title: m.title,
         tagline: m.description?.substring(0, 100) + "..." || "Experience the magic",
-        image: m.poster_url,
+        image: m.background_image_url || m.poster_url, // Prefer landscape background
         genre: m.genre?.join(' / ') || 'Cinema',
         trailer_url: m.trailer_url
     }));
@@ -73,23 +73,43 @@ export default function HeroSlider({ movies = [] }: { movies?: Movie[] }) {
                     transition={{ duration: 1.5, ease: "easeInOut" }}
                     className="absolute inset-0 w-full h-full"
                 >
-                    {/* Background Image with Parallax Scale */}
-                    <motion.div
-                        initial={{ scale: 1.1 }}
-                        animate={{ scale: 1 }}
-                        transition={{ duration: 6, ease: "easeOut" }}
-                        className="absolute inset-0"
-                    >
-                        <img
-                            src={currentSlide.image}
-                            alt={currentSlide.title}
-                            className="w-full h-full object-cover"
-                        />
-                    </motion.div>
+                    {/* Dual-Layer Image Approach: Show "all of it" while filling the screen */}
+                    <div className="absolute inset-0 bg-cinema-black">
+                        {/* Background Layer: Blurred and covers everything */}
+                        <motion.div
+                            initial={{ scale: 1.1, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 0.4 }}
+                            transition={{ duration: 6, ease: "easeOut" }}
+                            className="absolute inset-0"
+                        >
+                            <img
+                                src={currentSlide.image}
+                                alt=""
+                                className="w-full h-full object-cover blur-3xl"
+                                onError={(e) => {
+                                    e.currentTarget.src = 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?q=80&w=2070';
+                                }}
+                            />
+                        </motion.div>
 
-                    {/* Overlay Gradient - Deeper and richer */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-cinema-black via-cinema-black/20 to-transparent" />
-                    <div className="absolute inset-0 bg-gradient-to-r from-cinema-black via-cinema-black/60 to-transparent" />
+                        {/* Foreground Layer: Contains the full image without cropping */}
+                        <motion.div
+                            initial={{ scale: 0.9, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            transition={{ duration: 1.2, ease: "easeOut" }}
+                            className="absolute inset-0 flex items-center justify-center pointer-events-none"
+                        >
+                            <img
+                                src={currentSlide.image}
+                                alt={currentSlide.title}
+                                className="max-w-full max-h-full object-contain shadow-2xl"
+                            />
+                        </motion.div>
+                    </div>
+
+                    {/* Overlay Gradient - Refined to not hide much of the contained image */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-cinema-black via-transparent to-transparent opacity-80" />
+                    <div className="absolute inset-0 bg-gradient-to-r from-cinema-black/80 via-transparent to-transparent" />
 
                     {/* Subtle Overlay Pattern */}
                     <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10 pointer-events-none" />
