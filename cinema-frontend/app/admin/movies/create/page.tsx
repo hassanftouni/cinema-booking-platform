@@ -40,9 +40,8 @@ export default function CreateMoviePage() {
     const [showtimes, setShowtimes] = useState<Showtime[]>([]);
     const [scheduleForm, setScheduleForm] = useState({
         hall_id: '',
-        date: '',
-        time: '',
-        end_time: ''
+        date: new Date().toISOString().split('T')[0], // Default to today
+        slots: [{ start: '18:00', end: '' }] // Array of start/end pairs
     });
 
     const [hallError, setHallError] = useState('');
@@ -66,55 +65,89 @@ export default function CreateMoviePage() {
         loadHalls();
     }, []);
 
+    const calculateEndTime = (startTime: string) => {
+        if (!startTime || !formData.duration_minutes) return '';
+        try {
+            const [hours, minutes] = startTime.split(':').map(Number);
+            const duration = parseInt(formData.duration_minutes);
+            const date = new Date();
+            date.setHours(hours, minutes, 0);
+            date.setMinutes(date.getMinutes() + duration + 15);
+            return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+        } catch (err) {
+            return '';
+        }
+    };
+
+    const addSlot = () => {
+        const lastSlot = scheduleForm.slots[scheduleForm.slots.length - 1];
+        const newStart = lastSlot ? lastSlot.end || '20:00' : '18:00';
+        setScheduleForm(prev => ({
+            ...prev,
+            slots: [...prev.slots, { start: newStart, end: calculateEndTime(newStart) }]
+        }));
+    };
+
+    const updateSlot = (index: number, field: 'start' | 'end', value: string) => {
+        const newSlots = [...scheduleForm.slots];
+        newSlots[index][field] = value;
+
+        // Auto-calculate end if start changes
+        if (field === 'start') {
+            newSlots[index].end = calculateEndTime(value);
+        }
+
+        setScheduleForm(prev => ({ ...prev, slots: newSlots }));
+    };
+
+    const removeSlot = (index: number) => {
+        if (scheduleForm.slots.length === 1) return; // Keep at least one
+        setScheduleForm(prev => ({
+            ...prev,
+            slots: prev.slots.filter((_, i) => i !== index)
+        }));
+    };
+
     const addShowtime = () => {
-        if (!scheduleForm.hall_id || !scheduleForm.date || !scheduleForm.time || !scheduleForm.end_time) {
-            setError('Please fill in all showtime fields (Hall, Date, Start Time, and End Time) before adding.');
+        if (!scheduleForm.hall_id || !scheduleForm.date) {
+            setError('Please select a Hall and Date.');
             return;
         }
 
-        const start_time = `${scheduleForm.date}T${scheduleForm.time}:00`;
-        const end_time = `${scheduleForm.date}T${scheduleForm.end_time}:00`;
+        const newShowtimes = [...showtimes];
+        let addedCount = 0;
 
-        // Clear any previous error if showtime is valid
-        setError('');
+        scheduleForm.slots.forEach(slot => {
+            if (!slot.start || !slot.end) return;
 
-        setShowtimes([...showtimes, {
-            hall_id: scheduleForm.hall_id,
-            start_time,
-            end_time
-        }]);
+            const start_time = `${scheduleForm.date}T${slot.start}:00`;
+            const end_time = `${scheduleForm.date}T${slot.end}:00`;
 
-        // Reset times only for easier multi-entry
-        setScheduleForm(prev => ({ ...prev, time: '', end_time: '' }));
-    };
+            const isDuplicate = showtimes.some(st =>
+                st.hall_id === scheduleForm.hall_id &&
+                st.start_time === start_time
+            );
 
-    // Auto-calculate end time when start time changes
-    useEffect(() => {
-        if (scheduleForm.time && formData.duration_minutes) {
-            try {
-                const [hours, minutes] = scheduleForm.time.split(':').map(Number);
-                const duration = parseInt(formData.duration_minutes);
-
-                if (!isNaN(hours) && !isNaN(minutes) && !isNaN(duration)) {
-                    const date = new Date();
-                    date.setHours(hours, minutes, 0);
-
-                    // Add duration + 15 mins buffer
-                    date.setMinutes(date.getMinutes() + duration + 15);
-
-                    const endHours = String(date.getHours()).padStart(2, '0');
-                    const endMinutes = String(date.getMinutes()).padStart(2, '0');
-
-                    setScheduleForm(prev => ({
-                        ...prev,
-                        end_time: `${endHours}:${endMinutes}`
-                    }));
-                }
-            } catch (err) {
-                console.error("Failed to calculate end time", err);
+            if (!isDuplicate) {
+                newShowtimes.push({
+                    hall_id: scheduleForm.hall_id,
+                    start_time,
+                    end_time
+                });
+                addedCount++;
             }
+        });
+
+        if (addedCount === 0) {
+            setError('All specified showtimes are already in the list or incomplete.');
+            return;
         }
-    }, [scheduleForm.time, formData.duration_minutes]);
+
+        setError('');
+        setShowtimes(newShowtimes);
+        // Reset slots but keep hall and date
+        setScheduleForm(prev => ({ ...prev, slots: [{ start: '18:00', end: '' }] }));
+    };
 
     const removeShowtime = (index: number) => {
         setShowtimes(showtimes.filter((_, i) => i !== index));
@@ -522,23 +555,49 @@ export default function CreateMoviePage() {
                                     className="w-full bg-black/40 border border-white/20 rounded-lg p-2 text-sm focus:border-gold-500 outline-none"
                                 />
                             </div>
-                            <div className="space-y-1">
-                                <label className="text-xs text-gray-400">Start Time</label>
-                                <input
-                                    type="time"
-                                    value={scheduleForm.time}
-                                    onChange={e => setScheduleForm({ ...scheduleForm, time: e.target.value })}
-                                    className="w-full bg-black/40 border border-white/20 rounded-lg p-2 text-sm focus:border-gold-500 outline-none"
-                                />
-                            </div>
-                            <div className="space-y-1">
-                                <label className="text-xs text-gray-400">End Time</label>
-                                <input
-                                    type="time"
-                                    value={scheduleForm.end_time}
-                                    onChange={e => setScheduleForm({ ...scheduleForm, end_time: e.target.value })}
-                                    className="w-full bg-black/40 border border-white/20 rounded-lg p-2 text-sm focus:border-gold-500 outline-none"
-                                />
+                            <div className="md:col-span-3 space-y-4">
+                                <label className="text-xs text-gray-400">Time Slots for this Day</label>
+                                <div className="space-y-3">
+                                    {scheduleForm.slots.map((slot, index) => (
+                                        <div key={index} className="flex items-center gap-3 animate-in fade-in slide-in-from-left-2 duration-300">
+                                            <div className="flex-1 grid grid-cols-2 gap-2">
+                                                <div className="relative">
+                                                    <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[10px] text-gray-500 font-bold uppercase">In</span>
+                                                    <input
+                                                        type="time"
+                                                        value={slot.start}
+                                                        onChange={(e) => updateSlot(index, 'start', e.target.value)}
+                                                        className="w-full bg-black/40 border border-white/20 rounded-lg p-2 pl-7 text-xs focus:border-gold-500 outline-none"
+                                                    />
+                                                </div>
+                                                <div className="relative">
+                                                    <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[10px] text-gray-500 font-bold uppercase">Out</span>
+                                                    <input
+                                                        type="time"
+                                                        value={slot.end}
+                                                        onChange={(e) => updateSlot(index, 'end', e.target.value)}
+                                                        className="w-full bg-black/40 border border-white/20 rounded-lg p-2 pl-8 text-xs focus:border-gold-500 outline-none"
+                                                    />
+                                                </div>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={() => removeSlot(index)}
+                                                className="p-2 text-gray-500 hover:text-red-500 transition-colors"
+                                                disabled={scheduleForm.slots.length === 1}
+                                            >
+                                                <X className="w-4 h-4" />
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={addSlot}
+                                    className="text-[10px] font-bold text-gold-500 hover:text-gold-400 flex items-center gap-1 transition-colors px-1"
+                                >
+                                    + Add Another Time Slot
+                                </button>
                             </div>
                             <button
                                 type="button"
@@ -547,41 +606,75 @@ export default function CreateMoviePage() {
                             >
                                 + Add Show
                             </button>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    if (!scheduleForm.date) return;
+                                    const nextDay = new Date(scheduleForm.date);
+                                    nextDay.setDate(nextDay.getDate() + 1);
+                                    setScheduleForm(prev => ({ ...prev, date: nextDay.toISOString().split('T')[0] }));
+                                }}
+                                className="bg-white/10 hover:bg-white/20 text-white font-bold py-2 px-4 rounded-lg text-sm transition-colors whitespace-nowrap"
+                                title="Set date to tomorrow"
+                            >
+                                Next Day
+                            </button>
                         </div>
 
-                        {/* Scheduled Showtimes List */}
-                        <div className="space-y-2">
+                        {/* Scheduled Showtimes List Grouped by Date */}
+                        <div className="space-y-6">
                             {showtimes.length === 0 && <p className="text-gray-500 italic text-sm">No showtimes added yet.</p>}
-                            {showtimes.map((st, i) => {
-                                const hall = halls.find(h => h.id === st.hall_id);
-                                const date = new Date(st.start_time);
-                                return (
-                                    <div key={i} className="flex items-center justify-between bg-white/5 p-3 rounded-lg border border-white/5">
+                            {Object.entries(
+                                showtimes.reduce((acc, st) => {
+                                    const dateKey = st.start_time.split('T')[0];
+                                    if (!acc[dateKey]) acc[dateKey] = [];
+                                    acc[dateKey].push(st);
+                                    return acc;
+                                }, {} as Record<string, Showtime[]>)
+                            )
+                                .sort(([dateA], [dateB]) => dateA.localeCompare(dateB))
+                                .map(([dateStr, times]) => (
+                                    <div key={dateStr} className="space-y-3">
                                         <div className="flex items-center gap-4">
-                                            <div className="px-3 py-1 bg-white/10 rounded text-xs text-gold-500 font-bold uppercase tracking-wider">
-                                                {hall?.name || 'Unknown Hall'}
-                                            </div>
-                                            <div className="text-sm">
-                                                <span className="text-white font-medium">
-                                                    {date.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-                                                </span>
-                                                <span className="mx-2 text-gray-600">|</span>
-                                                <span className="text-gray-300">
-                                                    {date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}
-                                                    {st.end_time && ` - ${new Date(st.end_time).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}`}
-                                                </span>
-                                            </div>
+                                            <div className="h-px flex-1 bg-white/10"></div>
+                                            <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">
+                                                {new Date(dateStr).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                                            </span>
+                                            <div className="h-px flex-1 bg-white/10"></div>
                                         </div>
-                                        <button
-                                            type="button"
-                                            onClick={() => removeShowtime(i)}
-                                            className="text-red-500 hover:text-red-400 p-1"
-                                        >
-                                            <X className="w-4 h-4" />
-                                        </button>
+                                        <div className="grid grid-cols-1 gap-2">
+                                            {times
+                                                .sort((a, b) => a.start_time.localeCompare(b.start_time))
+                                                .map((st) => {
+                                                    const hall = halls.find(h => h.id === st.hall_id);
+                                                    const date = new Date(st.start_time);
+                                                    const originalIndex = showtimes.indexOf(st);
+                                                    return (
+                                                        <div key={st.start_time + st.hall_id} className="flex items-center justify-between bg-white/5 p-3 rounded-lg border border-white/5">
+                                                            <div className="flex items-center gap-4">
+                                                                <div className="px-3 py-1 bg-white/10 rounded text-xs text-gold-500 font-bold uppercase tracking-wider">
+                                                                    {hall?.name || 'Unknown Hall'}
+                                                                </div>
+                                                                <div className="text-sm">
+                                                                    <span className="text-gray-300">
+                                                                        {date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}
+                                                                        {st.end_time && ` - ${new Date(st.end_time).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}`}
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => removeShowtime(originalIndex)}
+                                                                className="text-red-500 hover:text-red-400 p-1"
+                                                            >
+                                                                <X className="w-4 h-4" />
+                                                            </button>
+                                                        </div>
+                                                    );
+                                                })}
+                                        </div>
                                     </div>
-                                );
-                            })}
+                                ))}
                         </div>
                     </div>
 

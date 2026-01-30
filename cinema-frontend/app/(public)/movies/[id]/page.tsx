@@ -182,44 +182,63 @@ export default function MovieDetails({ params }: { params: Promise<{ id: string 
 
                         <div className="space-y-10">
                             {movie.showtimes && movie.showtimes.length > 0 ? (
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                    {movie.showtimes.map((show: any, i: number) => (
-                                        <motion.div
-                                            key={show.id}
-                                            initial={{ opacity: 0, y: 20 }}
-                                            whileInView={{ opacity: 1, y: 0 }}
-                                            transition={{ delay: i * 0.1 }}
-                                            viewport={{ once: true }}
-                                        >
-                                            <div
-                                                onClick={(e) => handleProtectedAction(e, `/booking/${show.id}/seats`)}
-                                                className="group flex items-center justify-between p-8 bg-black/40 border border-white/5 rounded-3xl hover:border-gold-500/50 hover:bg-black/60 transition-all duration-500 cursor-pointer"
-                                            >
-                                                <div className="space-y-4">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="w-2 h-2 rounded-full bg-gold-500 animate-pulse shadow-[0_0_10px_rgba(234,179,8,1)]" />
-                                                        <span className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">{show.hall?.cinema?.name}</span>
-                                                    </div>
-                                                    <div className="text-4xl font-black text-white group-hover:text-gold-500 transition-colors tracking-tighter">
-                                                        {new Date(show.start_time).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true })}
-                                                        <span className="text-xl text-gray-500 mx-2">-</span>
-                                                        {new Date(show.end_time).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true })}
-                                                    </div>
-                                                    <div className="flex items-center gap-2 text-[10px] font-bold text-gray-500 uppercase tracking-widest">
-                                                        <Clock className="w-3 h-3 text-gold-500" />
-                                                        {new Date(show.start_time).toLocaleDateString([], { weekday: 'long', month: 'short', day: 'numeric' })}
-                                                    </div>
-                                                </div>
-                                                <div className="flex flex-col items-end gap-6">
-                                                    <span className="px-4 py-2 bg-gold-500/10 text-gold-500 rounded-2xl border border-gold-500/15 text-[10px] font-black uppercase tracking-widest">
-                                                        {show.hall?.name}
-                                                    </span>
-                                                    <div className="w-12 h-12 rounded-full bg-white/5 border border-white/10 flex items-center justify-center group-hover:bg-gold-500 group-hover:text-black transition-all duration-500">
-                                                        <ChevronRight className="w-6 h-6" />
-                                                    </div>
-                                                </div>
+                                <div className="space-y-12">
+                                    {Object.entries(
+                                        movie.showtimes.reduce((acc: any, show: any) => {
+                                            const dateKey = new Date(show.start_time).toLocaleDateString([], { weekday: 'long', month: 'short', day: 'numeric' });
+                                            if (!acc[dateKey]) acc[dateKey] = [];
+                                            acc[dateKey].push(show);
+                                            return acc;
+                                        }, {})
+                                    ).map(([dateStr, times]: [string, any], groupIndex) => (
+                                        <div key={dateStr} className="space-y-6">
+                                            <div className="flex items-center gap-4">
+                                                <div className="h-px flex-1 bg-white/10" />
+                                                <span className="text-xs font-black text-gold-500/50 uppercase tracking-[0.3em] whitespace-nowrap">
+                                                    {dateStr}
+                                                </span>
+                                                <div className="h-px flex-1 bg-white/10" />
                                             </div>
-                                        </motion.div>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                                {times
+                                                    .sort((a: any, b: any) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime())
+                                                    .map((show: any, i: number) => (
+                                                        <motion.div
+                                                            key={show.id}
+                                                            initial={{ opacity: 0, y: 20 }}
+                                                            whileInView={{ opacity: 1, y: 0 }}
+                                                            transition={{ delay: i * 0.1 }}
+                                                            viewport={{ once: true }}
+                                                        >
+                                                            <div
+                                                                onClick={(e) => handleProtectedAction(e, `/booking/${show.id}/seats`)}
+                                                                className="group flex items-center justify-between p-8 bg-black/40 border border-white/5 rounded-3xl hover:border-gold-500/50 hover:bg-black/60 transition-all duration-500 cursor-pointer"
+                                                            >
+                                                                <div className="space-y-4">
+                                                                    <div className="flex items-center gap-3">
+                                                                        <div className="w-2 h-2 rounded-full bg-gold-500 animate-pulse shadow-[0_0_10px_rgba(234,179,8,1)]" />
+                                                                        <span className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">{show.hall?.cinema?.name}</span>
+                                                                    </div>
+                                                                    <div className="text-4xl font-black text-white group-hover:text-gold-500 transition-colors tracking-tighter">
+                                                                        {new Date(show.start_time).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true })}
+                                                                        <span className="text-xl text-gray-500 mx-2">-</span>
+                                                                        {new Date(show.end_time).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true })}
+                                                                    </div>
+                                                                    <div className="flex items-center gap-2 text-[10px] font-bold text-gray-500 uppercase tracking-widest">
+                                                                        <Clock className="w-3 h-3 text-gold-500" />
+                                                                        {show.hall?.name}
+                                                                    </div>
+                                                                </div>
+                                                                <div className="flex flex-col items-end">
+                                                                    <div className="w-12 h-12 rounded-full bg-white/5 border border-white/10 flex items-center justify-center group-hover:bg-gold-500 group-hover:text-black transition-all duration-500">
+                                                                        <ChevronRight className="w-6 h-6" />
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </motion.div>
+                                                    ))}
+                                            </div>
+                                        </div>
                                     ))}
                                 </div>
                             ) : (
