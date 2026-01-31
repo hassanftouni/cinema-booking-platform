@@ -133,9 +133,7 @@ export default function Navbar() {
                     <div className="container mx-auto px-6 flex items-center justify-between">
                         {/* Logo - Hidden on mobile when menu open */}
                         <Link href="/" className={`${mobileMenuOpen ? 'opacity-0 invisible pointer-events-none' : 'opacity-100 visible'} flex items-center gap-2 group z-[70] relative transition-all duration-300`}>
-                            <div className="w-8 h-8 md:w-10 md:h-10 border-2 border-gold-500 rounded-full flex items-center justify-center border-dashed group-hover:rotate-180 transition-transform duration-700">
-                                <Ticket className="w-4 h-4 md:w-5 md:h-5 text-gold-500" />
-                            </div>
+                            <img src="/logo.png" className="w-10 h-10 md:w-12 md:h-12 object-contain" alt="Cinemacity Logo" />
                             <span className="text-xl md:text-2xl font-serif font-bold text-white tracking-wide">
                                 BEIRUT SOUKS <span className="text-gold-gradient">CINEMACITY</span>
                             </span>
