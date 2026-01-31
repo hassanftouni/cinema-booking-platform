@@ -118,7 +118,7 @@ export default function Navbar() {
             >
                 <div className={`${scrolled && !mobileMenuOpen ? 'py-4' : 'py-6'} transition-all duration-500`}>
                     {userName && !mobileMenuOpen && (
-                        <div className="py-1.5 mb-2 hidden md:block">
+                        <div className="py-1.5 mb-2 block">
                             <div className="container mx-auto px-6">
                                 <motion.p
                                     initial={{ opacity: 0, y: -10 }}
