@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { motion, useScroll, useMotionValueEvent, AnimatePresence } from 'framer-motion';
 import { usePathname } from 'next/navigation';
-import { User, Menu, Ticket, Bell } from 'lucide-react';
+import { User, Menu, X, Ticket, Bell } from 'lucide-react';
 import { fetchAPI } from '../../lib/api/client';
 import { getEcho } from '../../lib/echo';
 
@@ -16,7 +16,8 @@ export default function Navbar() {
 
     useMotionValueEvent(scrollY, "change", (latest) => {
         const previous = scrollY.getPrevious() ?? 0;
-        if (latest > previous && latest > 150) {
+        // Don't hide navbar if mobile menu is open
+        if (latest > previous && latest > 150 && !mobileMenuOpen) {
             setHidden(true);
         } else {
             setHidden(false);
@@ -110,7 +111,7 @@ export default function Navbar() {
             }}
             animate={hidden ? "hidden" : "visible"}
             transition={{ duration: 0.35, ease: "easeInOut" }}
-            className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${scrolled
+            className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${scrolled || mobileMenuOpen
                 ? 'bg-cinema-black/70 backdrop-blur-2xl border-b border-white/5 shadow-[0_10px_30px_rgba(0,0,0,0.8)]'
                 : 'bg-transparent'
                 }`}
@@ -169,9 +170,9 @@ export default function Navbar() {
                             <div className="hidden md:flex items-center gap-4">
                                 {isAdmin && (
                                     <>
-                                        <Link href="/admin/movies" className="text-sm font-medium text-gray-300 hover:text-gold-400">Admin</Link>
-                                        <Link href="/admin/offers" className="text-sm font-medium text-gray-300 hover:text-gold-400">Offers</Link>
-                                        <Link href="/admin/contacts" className="text-sm font-medium text-gray-300 hover:text-gold-400 relative">
+                                        <Link href="/admin/movies" prefetch={false} className="text-sm font-medium text-gray-300 hover:text-gold-400">Admin</Link>
+                                        <Link href="/admin/offers" prefetch={false} className="text-sm font-medium text-gray-300 hover:text-gold-400">Offers</Link>
+                                        <Link href="/admin/contacts" prefetch={false} className="text-sm font-medium text-gray-300 hover:text-gold-400 relative">
                                             Inquiries
                                             {unreadInquiries > 0 && (
                                                 <span className="absolute -top-2 -right-4 bg-gold-500 text-black text-[10px] font-bold w-4 h-4 flex items-center justify-center rounded-full border border-black animate-pulse">
@@ -196,10 +197,10 @@ export default function Navbar() {
                         )}
 
                         <button
-                            className="md:hidden text-white z-50 relative"
+                            className="md:hidden text-white z-[60] relative p-2"
                             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                         >
-                            <Menu className="w-6 h-6" />
+                            {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
                         </button>
                     </div>
 
@@ -229,10 +230,10 @@ export default function Navbar() {
                                         {isAdmin && (
                                             <>
                                                 <>
-                                                    <Link href="/admin/movies" onClick={() => setMobileMenuOpen(false)} className="text-lg text-gray-300">Manage Movies</Link>
-                                                    <Link href="/admin/cinemas" onClick={() => setMobileMenuOpen(false)} className="text-lg text-gray-300">Manage Cinemas</Link>
-                                                    <Link href="/admin/offers" onClick={() => setMobileMenuOpen(false)} className="text-lg text-gray-300">Manage Offers</Link>
-                                                    <Link href="/admin/contacts" onClick={() => setMobileMenuOpen(false)} className="text-lg text-gray-300">Inquiries</Link>
+                                                    <Link href="/admin/movies" prefetch={false} onClick={() => setMobileMenuOpen(false)} className="text-lg text-gray-300">Manage Movies</Link>
+                                                    <Link href="/admin/cinemas" prefetch={false} onClick={() => setMobileMenuOpen(false)} className="text-lg text-gray-300">Manage Cinemas</Link>
+                                                    <Link href="/admin/offers" prefetch={false} onClick={() => setMobileMenuOpen(false)} className="text-lg text-gray-300">Manage Offers</Link>
+                                                    <Link href="/admin/contacts" prefetch={false} onClick={() => setMobileMenuOpen(false)} className="text-lg text-gray-300">Inquiries</Link>
                                                 </>
                                             </>
                                         )}

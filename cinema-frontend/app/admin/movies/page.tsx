@@ -70,28 +70,28 @@ export default function AdminMoviesPage() {
                         <h1 className="text-2xl md:text-3xl font-bold font-serif text-gold-500">Movie Management</h1>
                     </div>
                     <div className="flex flex-wrap gap-3">
-                        <Link href="/admin/cinemas">
+                        <Link href="/admin/cinemas" prefetch={false}>
                             <button className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white font-bold px-4 md:px-6 py-2 md:py-3 rounded-lg transition-transform hover:scale-105 text-sm md:text-base">
                                 <MapPin className="w-4 h-4 md:w-5 md:h-5" />
                                 <span className="hidden sm:inline">Manage Cinemas</span>
                                 <span className="sm:hidden">Cinemas</span>
                             </button>
                         </Link>
-                        <Link href="/admin/bookings">
+                        <Link href="/admin/bookings" prefetch={false}>
                             <button className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white font-bold px-4 md:px-6 py-2 md:py-3 rounded-lg transition-transform hover:scale-105 text-sm md:text-base">
                                 <User className="w-4 h-4 md:w-5 md:h-5" />
                                 <span className="hidden sm:inline">Manage Bookings</span>
                                 <span className="sm:hidden">Bookings</span>
                             </button>
                         </Link>
-                        <Link href="/admin/users">
+                        <Link href="/admin/users" prefetch={false}>
                             <button className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white font-bold px-4 md:px-6 py-2 md:py-3 rounded-lg transition-transform hover:scale-105 text-sm md:text-base">
                                 <User className="w-4 h-4 md:w-5 md:h-5" />
                                 <span className="hidden sm:inline">Manage Users</span>
                                 <span className="sm:hidden">Users</span>
                             </button>
                         </Link>
-                        <Link href="/admin/movies/create">
+                        <Link href="/admin/movies/create" prefetch={false}>
                             <button className="flex items-center gap-2 bg-gold-600 hover:bg-gold-500 text-black font-bold px-4 md:px-6 py-2 md:py-3 rounded-lg transition-transform hover:scale-105 text-sm md:text-base">
                                 <Plus className="w-4 h-4 md:w-5 md:h-5" />
                                 Add Movie
@@ -160,7 +160,7 @@ export default function AdminMoviesPage() {
                                     : `There are no movies in the "${activeFilter === 'now_showing' ? 'Now Selling' : 'Coming Soon'}" category yet.`
                                 }
                             </p>
-                            <Link href="/admin/movies/create">
+                            <Link href="/admin/movies/create" prefetch={false}>
                                 <button className="flex items-center gap-2 bg-gold-600 hover:bg-gold-500 text-black font-bold px-8 py-4 rounded-lg transition-transform hover:scale-105 mx-auto">
                                     <Plus className="w-5 h-5" />
                                     Add Your First Movie
@@ -236,7 +236,7 @@ export default function AdminMoviesPage() {
 
                                     {/* Action Buttons */}
                                     <div className="flex gap-2">
-                                        <Link href={`/admin/movies/${movie.id}/edit`} className="flex-1">
+                                        <Link href={`/admin/movies/${movie.id}/edit`} prefetch={false} className="flex-1">
                                             <button className="w-full flex items-center justify-center gap-2 p-2 bg-white/10 hover:bg-white/20 rounded-lg text-blue-400 transition-colors">
                                                 <Edit className="w-4 h-4" />
                                                 Edit

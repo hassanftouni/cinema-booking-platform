@@ -19,6 +19,7 @@ interface UserData {
 export default function AdminUsersPage() {
     const [users, setUsers] = useState<UserData[]>([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
     const [editingId, setEditingId] = useState<number | null>(null);
     const [editForm, setEditForm] = useState({ name: '', email: '' });
 
@@ -35,17 +36,21 @@ export default function AdminUsersPage() {
         onConfirm: () => { }
     });
 
+    const loadUsers = async () => {
+        setLoading(true);
+        setError(null);
+        try {
+            const data = await fetchAPI('/admin/users');
+            setUsers(data.data || []);
+        } catch (error: any) {
+            console.error("Failed to fetch users", error);
+            setError(error?.message || "Failed to load users. Please check your connection.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
     useEffect(() => {
-        const loadUsers = async () => {
-            try {
-                const data = await fetchAPI('/admin/users');
-                setUsers(data.data || []);
-            } catch (error) {
-                console.error("Failed to fetch users", error);
-            } finally {
-                setLoading(false);
-            }
-        };
         loadUsers();
     }, []);
 
@@ -129,7 +134,7 @@ export default function AdminUsersPage() {
             <div className="max-w-6xl mx-auto">
                 <div className="flex flex-col md:flex-row justify-between items-center mb-8 md:mb-12 gap-6 md:gap-0">
                     <div className="flex items-center gap-4 w-full md:w-auto justify-center md:justify-start">
-                        <Link href="/admin/movies" className="p-2 hover:bg-white/10 rounded-full transition-colors" title="Back to Movies">
+                        <Link href="/admin/movies" prefetch={false} className="p-2 hover:bg-white/10 rounded-full transition-colors" title="Back to Movies">
                             <ArrowLeft className="w-6 h-6 text-gray-400" />
                         </Link>
                         <Link href="/" className="p-2 hover:bg-white/10 rounded-full transition-colors text-gray-400 hover:text-gold-500" title="Back to Site">
@@ -139,7 +144,17 @@ export default function AdminUsersPage() {
                     </div>
                 </div>
 
-                {loading ? (
+                {error ? (
+                    <div className="text-center py-20 space-y-4">
+                        <p className="text-red-400 text-lg">{error}</p>
+                        <button
+                            onClick={loadUsers}
+                            className="px-6 py-2 bg-gold-600 hover:bg-gold-500 text-black font-bold rounded-lg transition-all"
+                        >
+                            Retry Loading
+                        </button>
+                    </div>
+                ) : loading ? (
                     <div className="text-center py-20">Loading...</div>
                 ) : (
                     <div className="space-y-4">
@@ -182,7 +197,7 @@ export default function AdminUsersPage() {
                                                 </div>
                                                 <div className="flex items-center gap-1">
                                                     <Calendar className="w-3 h-3" />
-                                                    Joined {new Date(user.created_at).toLocaleDateString()}
+                                                    Joined {user.created_at ? new Date(user.created_at).toLocaleDateString() : 'N/A'}
                                                 </div>
                                             </div>
                                         </div>
