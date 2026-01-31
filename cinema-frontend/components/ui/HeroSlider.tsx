@@ -77,7 +77,7 @@ export default function HeroSlider({ movies = [] }: { movies?: Movie[] }) {
                     <div className="absolute inset-0 bg-cinema-black">
                         <motion.div
                             initial={{ scale: 1.1, opacity: 0 }}
-                            animate={{ scale: 1, opacity: 0.5 }}
+                            animate={{ scale: 1, opacity: 0.8 }}
                             transition={{ duration: 6, ease: "easeOut" }}
                             className="absolute inset-0"
                         >
@@ -92,9 +92,8 @@ export default function HeroSlider({ movies = [] }: { movies?: Movie[] }) {
                         </motion.div>
                     </div>
 
-                    {/* Overlay Gradients - Cinematic look */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-cinema-black via-cinema-black/40 to-transparent" />
-                    <div className="absolute inset-0 bg-gradient-to-r from-cinema-black via-cinema-black/60 to-transparent" />
+                    {/* Overlay Gradients - Made much subtler to prevent "black half" look */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-cinema-black via-cinema-black/20 to-transparent opacity-60" />
                 </motion.div>
             </AnimatePresence>
 
